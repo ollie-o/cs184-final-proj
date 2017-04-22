@@ -1,54 +1,93 @@
-  //////////////////////////////////////////////////////////////////////////////////
-  //    Init
-  //////////////////////////////////////////////////////////////////////////////////
-  // init renderer
-  var renderer  = new THREE.WebGLRenderer({
-    antialias : true
-  });
-  renderer.setClearColor(new THREE.Color('lightgrey'), 1)
-  renderer.setSize( window.innerWidth, window.innerHeight );
-  document.body.appendChild( renderer.domElement );
-  // array of functions for the rendering loop
-  var onRenderFcts= [];
-  // init scene and camera
-  var scene = new THREE.Scene();
-  var camera  = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.01, 1000);
-  camera.position.z = 2;
-  var controls  = new THREE.OrbitControls(camera)
-  //////////////////////////////////////////////////////////////////////////////////
-  //    add an object in the scene
-  //////////////////////////////////////////////////////////////////////////////////
-  // add a torus
-  var geometry  = new THREE.TorusKnotGeometry(0.5-0.12, 0.12);
-  var material  = new THREE.MeshNormalMaterial();
-  var mesh  = new THREE.Mesh( geometry, material );
-  scene.add( mesh );
+// Set the scene size.
+var WIDTH = 400;
+var HEIGHT = 300;
 
-  //////////////////////////////////////////////////////////////////////////////////
-  //    render the whole thing on the page
-  //////////////////////////////////////////////////////////////////////////////////
-  // handle window resize
-  window.addEventListener('resize', function(){
-    renderer.setSize( window.innerWidth, window.innerHeight )
-    camera.aspect = window.innerWidth / window.innerHeight
-    camera.updateProjectionMatrix()
-  }, false)
-  // render the scene
-  onRenderFcts.push(function(){
-    renderer.render( scene, camera );
-  })
+// Set some camera attributes.
+var VIEW_ANGLE = 45;
+var ASPECT = WIDTH / HEIGHT;
+var NEAR = 0.1;
+var FAR = 10000;
 
-  // run the rendering loop
-  var lastTimeMsec= null
-  requestAnimationFrame(function animate(nowMsec){
-    // keep looping
-    requestAnimationFrame( animate );
-    // measure time
-    lastTimeMsec  = lastTimeMsec || nowMsec-1000/60
-    var deltaMsec = Math.min(200, nowMsec - lastTimeMsec)
-    lastTimeMsec  = nowMsec
-    // call each update function
-    onRenderFcts.forEach(function(onRenderFct){
-      onRenderFct(deltaMsec/1000, nowMsec/1000)
-    })
-  })
+// Get the DOM element to attach to
+var container =
+    document.getElementById('container');
+
+// Create a WebGL renderer, camera
+// and a scene
+var renderer = new THREE.WebGLRenderer();
+var camera =
+    new THREE.PerspectiveCamera(
+        VIEW_ANGLE,
+        ASPECT,
+        NEAR,
+        FAR
+    );
+
+var scene = new THREE.Scene();
+
+// Add the camera to the scene.
+scene.add(camera);
+
+// Start the renderer.
+renderer.setSize(WIDTH, HEIGHT);
+
+// Attach the renderer-supplied
+// DOM element.
+container.appendChild(renderer.domElement);
+
+// Set up the sphere vars
+var RADIUS = 50;
+var SEGMENTS = 16;
+var RINGS = 16;
+
+// Create a new mesh with
+// sphere geometry - we will cover
+// the sphereMaterial next!
+var sphere = new THREE.Mesh(
+
+  new THREE.SphereGeometry(
+    RADIUS,
+    SEGMENTS,
+    RINGS),
+
+  sphereMaterial);
+
+// Move the Sphere back in Z so we
+// can see it.
+sphere.position.z = -300;
+
+// Finally, add the sphere to the scene.
+scene.add(sphere);
+
+// create the sphere's material
+var sphereMaterial =
+  new THREE.MeshLambertMaterial(
+    {
+      color: 0xCC0000
+    });
+
+// create a point light
+var pointLight =
+  new THREE.PointLight(0xFFFFFF);
+
+// set its position
+pointLight.position.x = 10;
+pointLight.position.y = 50;
+pointLight.position.z = 130;
+
+// add to the scene
+scene.add(pointLight);
+
+// Draw!
+renderer.render(scene, camera);
+
+function update () {
+  // Draw!
+  renderer.render(scene, camera);
+
+  // Schedule the next frame.
+  requestAnimationFrame(update);
+}
+
+// Schedule the first frame.
+requestAnimationFrame(update);
