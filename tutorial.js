@@ -1,6 +1,6 @@
 // Set the scene size.
-var WIDTH = 400;
-var HEIGHT = 300;
+var WIDTH = window.innerWidth;
+var HEIGHT = window.innerHeight;
 
 // Set some camera attributes.
 var VIEW_ANGLE = 45;
@@ -35,10 +35,29 @@ renderer.setSize(WIDTH, HEIGHT);
 // DOM element.
 container.appendChild(renderer.domElement);
 
+// create a point light
+var pointLight =
+  new THREE.PointLight(0xFFFFFF);
+
+// set its position
+pointLight.position.x = 10;
+pointLight.position.y = 50;
+pointLight.position.z = 130;
+
+// add to the scene
+scene.add(pointLight);
+
+// create the sphere's material
+var sphereMaterial =
+  new THREE.MeshLambertMaterial(
+    {
+      color: 0xCC0000
+    });
+
 // Set up the sphere vars
 var RADIUS = 50;
-var SEGMENTS = 16;
-var RINGS = 16;
+var SEGMENTS = 4;
+var RINGS = 4;
 
 // Create a new mesh with
 // sphere geometry - we will cover
@@ -59,24 +78,11 @@ sphere.position.z = -300;
 // Finally, add the sphere to the scene.
 scene.add(sphere);
 
-// create the sphere's material
-var sphereMaterial =
-  new THREE.MeshLambertMaterial(
-    {
-      color: 0xCC0000
-    });
-
-// create a point light
-var pointLight =
-  new THREE.PointLight(0xFFFFFF);
-
-// set its position
-pointLight.position.x = 10;
-pointLight.position.y = 50;
-pointLight.position.z = 130;
-
-// add to the scene
-scene.add(pointLight);
+// wireframe
+var geo = new THREE.EdgesGeometry( sphere.geometry ); // or WireframeGeometry
+var mat = new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 2 } );
+var wireframe = new THREE.LineSegments( geo, mat );
+sphere.add( wireframe );
 
 // Draw!
 renderer.render(scene, camera);
