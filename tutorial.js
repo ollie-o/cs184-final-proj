@@ -89,6 +89,8 @@ renderer.render(scene, camera);
 
 function update () {
   // Draw!
+  sphere.position.x += 0.1;
+  sphere.rotation.y += Math.PI / 360;
   renderer.render(scene, camera);
 
   // Schedule the next frame.
