@@ -25,6 +25,8 @@ var camera =
         FAR
     );
 
+camera.position.set(0, 1.5, 10);
+
 var scene = new THREE.Scene();
 
 // Start the renderer.
@@ -67,24 +69,21 @@ function addSphere(radius, segments, rings, color, x, y, z) {
 function addPlane(width, height, color, x, y, z, rotX, rotY, rotZ) {
   var geometry = new THREE.PlaneGeometry( width, height);
   var material = new THREE.MeshPhongMaterial( {color: color, side: THREE.DoubleSide} );
-  var wall = new THREE.Mesh( geometry, material );
-  scene.add( wall );
-  if (x !== null) {wall.position.x = x;}
-  if (y !== null) {wall.position.y = y;}
-  if (z !== null) {wall.position.z = z;}
-  if (rotX !== null) {wall.rotation.x = rotX;}
-  if (rotY !== null) {wall.rotation.y = rotY;}
-  if (rotZ !== null) {wall.rotation.z = rotZ;}
-  // var geo = new THREE.EdgesGeometry( wall.geometry ); // or WireframeGeometry
-  // var mat = new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 2 } );
-  // var wireframe = new THREE.LineSegments( geo, mat );
-  // wall.add( wireframe );
+  var mesh = new THREE.Mesh( geometry, material );
+  scene.add( mesh );
+  if (x !== null) {mesh.position.x = x;}
+  if (y !== null) {mesh.position.y = y;}
+  if (z !== null) {mesh.position.z = z;}
+  if (rotX !== null) {mesh.rotation.x = rotX;}
+  if (rotY !== null) {mesh.rotation.y = rotY;}
+  if (rotZ !== null) {mesh.rotation.z = rotZ;}
+  return mesh;
 }
 
 function addHallway1(x,y,z,length) {
   addPlane(length, 2.5, 0xa03013, x+2.5, null, z, null, Math.PI/2, null);
   addPlane(length, 2.5, 0x90302F, x-2.5, null, z, null, Math.PI/2, null);
-  addPlane(5, length, 0xf0303D, null, y-1.25, z, Math.PI/2, null, null);
+  return addPlane(5, length, 0xf0303D, null, y-1.25, z, Math.PI/2, null, null);
 }
 
 function addPointLight(x,y,z, color) {
@@ -101,9 +100,10 @@ function addPointLight(x,y,z, color) {
 
 var controls = new THREE.OrbitControls( camera, renderer.domElement );
 controls.autoRotate = true;
+controls.maxDistance = 10;
 
 function init() {
-  for (i = 0; i<10; i++) {
+  for (i = 0; i<21; i++) {
     addPointLight(0,1.5, -50*i-7, 0xFFFFFF);
   }
   render();
@@ -111,17 +111,19 @@ function init() {
 
 var z = -5;
 var increment = 1.1;
+var mesh_just_added;
 function update () {
-  // Add geometry
-  addHallway1(0,0,z,Math.log(increment));
-  z -= Math.log(increment);
-  increment += 0.1;
-
   render();
   if (-z < 1000) {
-    requestAnimationFrame(update);
-    controls.update();
+    // Add geometry
+    mesh_just_added = addHallway1(0,0,z,Math.log(increment));
+    controls.target.copy(mesh_just_added.position);
+    camera.position.y += 1.25;
+    z -= Math.log(increment);
+    increment += 0.1;
   }
+  requestAnimationFrame(update);
+  controls.update();
 }
 
 function render() {
