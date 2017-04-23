@@ -93,7 +93,7 @@ function endSphere(ap, bp, fraction, m) {
     return sphere;
 }
 
-var scene = null
+var scene = null;
 function genScene(path, startFrac, endFrac) {
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0xffffff);
