@@ -40,9 +40,9 @@ var pointLight =
   new THREE.PointLight(0xFFFFFF);
 
 // set its position
-pointLight.position.x = 10;
-pointLight.position.y = 50;
-pointLight.position.z = 130;
+pointLight.position.x = 0;
+pointLight.position.y = 2.5;
+pointLight.position.z = -30;
 
 // add to the scene
 scene.add(pointLight);
@@ -55,7 +55,7 @@ var sphereMaterial =
     });
 
 // Set up the sphere vars
-var RADIUS = 50;
+var RADIUS = 1;
 var SEGMENTS = 4;
 var RINGS = 4;
 
@@ -73,10 +73,40 @@ var sphere = new THREE.Mesh(
 
 // Move the Sphere back in Z so we
 // can see it.
-sphere.position.z = -300;
+sphere.position.z = -30;
 
 // Finally, add the sphere to the scene.
 scene.add(sphere);
+
+function addPlane(width, height, color, x, y, z, rotX, rotY, rotZ) {
+  var geometry = new THREE.PlaneGeometry( width, height);
+  var material = new THREE.MeshLambertMaterial( {color: color, side: THREE.DoubleSide} );
+  var wall = new THREE.Mesh( geometry, material );
+  scene.add( wall );
+
+  if (x != null) {
+    wall.position.x = x;    
+  }
+  if (y != null) {
+    wall.position.y = y;    
+  }
+  if (z != null) {
+    wall.position.z = z;
+  }
+  if (rotX != null) {
+    wall.rotation.x = rotX;    
+  }
+  if (rotY != null) {
+    wall.rotation.y = rotY;    
+  }
+  if (rotZ != null) {
+    wall.rotation.z = rotZ;
+  }
+}
+
+addPlane(20, 2.5, 0xffff00, 2.5, null, -30, null, Math.PI/2, null);
+addPlane(20, 2.5, 0xffff00, -2.5, null, -30, null, Math.PI/2, null);
+addPlane(5, 20, 0xffff00, -2.5, null, -30, null, null, null);
 
 // wireframe
 var geo = new THREE.EdgesGeometry( sphere.geometry ); // or WireframeGeometry
@@ -89,8 +119,8 @@ renderer.render(scene, camera);
 
 function update () {
   // Draw!
-  sphere.position.x += 0.1;
-  sphere.rotation.y += Math.PI / 360;
+  // sphere.position.x += 0.1;
+  // sphere.rotation.y += Math.PI / 360;
   renderer.render(scene, camera);
 
   // Schedule the next frame.
