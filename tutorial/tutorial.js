@@ -66,9 +66,8 @@ function addSphere(radius, segments, rings, color, x, y, z) {
   scene.add(sphere);
 }
 
-function addPlane(width, height, color, x, y, z, rotX, rotY, rotZ) {
+function addPlane(width, height, x, y, z, rotX, rotY, rotZ, material) {
   var geometry = new THREE.PlaneGeometry( width, height);
-  var material = new THREE.MeshPhongMaterial( {color: color, side: THREE.DoubleSide} );
   var mesh = new THREE.Mesh( geometry, material );
   scene.add( mesh );
   if (x !== null) {mesh.position.x = x;}
@@ -81,9 +80,12 @@ function addPlane(width, height, color, x, y, z, rotX, rotY, rotZ) {
 }
 
 function addHallway1(x,y,z,length) {
-  addPlane(length, 2.5, 0xa03013, x+2.5, null, z, null, Math.PI/2, null);
-  addPlane(length, 2.5, 0x90302F, x-2.5, null, z, null, Math.PI/2, null);
-  return addPlane(5, length, 0xf0303D, null, y-1.25, z, Math.PI/2, null, null);
+  var paintMat = new THREE.MeshLambertMaterial( {color: 0xA8A280, side: THREE.BackSide} );
+  var floorMat = new THREE.MeshPhongMaterial( {color: 0x42331F, side: THREE.BackSide} );
+  floorMat.shininess = 110;
+  addPlane(length, 2.5, x+2.5, null, z, null, Math.PI/2, null, paintMat); // Left wall
+  addPlane(length, 2.5, x-2.5, null, z, null, -Math.PI/2, null, paintMat); // Right wall
+  return addPlane(5, length, null, y-1.25, z, Math.PI/2, null, null, floorMat); // Floor
 }
 
 function addPointLight(x,y,z, color) {
@@ -111,7 +113,7 @@ document.body.appendChild( stats.dom );
 
 function init() {
   for (var i = 0; i<21; i++) {
-    addPointLight(0,1.5, -50*i-7, 0xFFFFFF);
+    addPointLight(0,1.5, -25*i-7, 0xFFFFFF);
   }
   render();
 }
@@ -122,7 +124,7 @@ var mesh_just_added;
 function update () {
   stats.begin();
   render();
-  if (-z < 1000) {
+  if (-z < 100) {
     // Add geometry
     mesh_just_added = addHallway1(0,0,z,Math.log(increment));
     z -= Math.log(increment);
