@@ -98,12 +98,19 @@ function addPointLight(x,y,z, color) {
 
 // -------------------------------------------
 
+// ORBIT CONTROLS
 var controls = new THREE.OrbitControls( camera, renderer.domElement );
 controls.autoRotate = true;
 controls.maxDistance = 10;
+controls.maxPolarAngle = 0.4 * Math.PI;
+
+// STATS (fps, memory, etc.)
+var stats = new Stats();
+stats.showPanel( 0 );
+document.body.appendChild( stats.dom );
 
 function init() {
-  for (i = 0; i<21; i++) {
+  for (var i = 0; i<21; i++) {
     addPointLight(0,1.5, -50*i-7, 0xFFFFFF);
   }
   render();
@@ -113,17 +120,19 @@ var z = -5;
 var increment = 1.1;
 var mesh_just_added;
 function update () {
+  stats.begin();
   render();
   if (-z < 1000) {
     // Add geometry
     mesh_just_added = addHallway1(0,0,z,Math.log(increment));
-    controls.target.copy(mesh_just_added.position);
-    camera.position.y += 1.25;
     z -= Math.log(increment);
     increment += 0.1;
+    // adjust camera target
+    controls.target.copy(mesh_just_added.position);
   }
-  requestAnimationFrame(update);
   controls.update();
+  stats.end();
+  requestAnimationFrame(update);
 }
 
 function render() {
