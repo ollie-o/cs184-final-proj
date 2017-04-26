@@ -36,11 +36,10 @@ renderer.setSize(WIDTH, HEIGHT);
 // DOM element.
 container.appendChild(renderer.domElement);
 
-// // wireframe
-// var geo = new THREE.EdgesGeometry( sphere.geometry ); // or WireframeGeometry
-// var mat = new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 2 } );
-// var wireframe = new THREE.LineSegments( geo, mat );
-// sphere.add( wireframe );
+var paintMat = new THREE.MeshLambertMaterial( {color: 0xA8A280, side: THREE.BackSide} );
+var floorMat = new THREE.MeshPhongMaterial( {color: 0x42331F, side: THREE.DoubleSide} );
+floorMat.shininess = 110;
+var plainWhite = new THREE.MeshBasicMaterial({color: 0xFFFFFF, side: THREE.DoubleSide});
 
 function addSphere(radius, segments, rings, color, x, y, z) {
   // create the sphere's material
@@ -66,10 +65,9 @@ function addSphere(radius, segments, rings, color, x, y, z) {
   scene.add(sphere);
 }
 
-function addPlane(width, height, x, y, z, rotX, rotY, rotZ, material) {
+function makePlane(width, height, x, y, z, rotX, rotY, rotZ, material) {
   var geometry = new THREE.PlaneGeometry( width, height);
   var mesh = new THREE.Mesh( geometry, material );
-  scene.add( mesh );
   if (x !== null) {mesh.position.x = x;}
   if (y !== null) {mesh.position.y = y;}
   if (z !== null) {mesh.position.z = z;}
@@ -80,12 +78,9 @@ function addPlane(width, height, x, y, z, rotX, rotY, rotZ, material) {
 }
 
 function addHallway1(x,y,z,length) {
-  var paintMat = new THREE.MeshLambertMaterial( {color: 0xA8A280, side: THREE.BackSide} );
-  var floorMat = new THREE.MeshPhongMaterial( {color: 0x42331F, side: THREE.BackSide} );
-  floorMat.shininess = 110;
-  addPlane(length, 2.5, x+2.5, null, z, null, Math.PI/2, null, paintMat); // Left wall
-  addPlane(length, 2.5, x-2.5, null, z, null, -Math.PI/2, null, paintMat); // Right wall
-  return addPlane(5, length, null, y-1.25, z, Math.PI/2, null, null, floorMat); // Floor
+  scene.add(makePlane(length, 2.5, x+2.5, null, z, null, Math.PI/2, null, paintMat)); // Left wall
+  scene.add(makePlane(length, 2.5, x-2.5, null, z, null, -Math.PI/2, null, paintMat)); // Right wall
+  scene.add(makePlane(5, length, null, y-1.25, z, Math.PI/2, null, null, floorMat)); // Floor
 }
 
 function addPointLight(x,y,z, color) {
@@ -98,13 +93,43 @@ function addPointLight(x,y,z, color) {
   scene.add(pointLight);
 }
 
+function makeArrowHelper(ax, ay, az, bx, by, bz, length, hex) {
+  var dir = new THREE.Vector3( bx, by, bz );
+  //normalize the direction vector (convert to vector of length 1)
+  dir.normalize();
+  var origin = new THREE.Vector3( ax, ay, az );
+  return new THREE.ArrowHelper( dir, origin, length, hex);
+}
+
+var floor = null;
+function addHallwayAsVector(ax, ay, az, bx, by, bz) {
+  var length = Math.sqrt( Math.pow(ax-bx,2) + Math.pow(ay-by,2) + Math.pow(az-bz,2));
+  var arrow = makeArrowHelper(ax, ay, az, bx, by, bz, length);
+  console.log(arrow.rotation);
+  var sceneElements = [arrow];
+  // Floor
+  floor = makePlane(5, length, 0, 0, 0, arrow.rotation.x, arrow.rotation.y + Math.PI / 2, arrow.rotation.z, floorMat);
+  var arrowVector = new THREE.Vector3(bx, by, bz);
+  // floor.lookAt(arrowVector);
+  // floor.rotation.x = Math.PI / 2
+  // floor.rotation.z = Math.PI / 2;
+
+  sceneElements.push(floor);
+  // var floor2 = makePlane(5, length, 0, 0, 0, Math.PI/4, Math.PI/2, null, plainWhite);
+  // sceneElements.push(floor2);
+  //
+  for (var i = 0; i < sceneElements.length; i++) {
+    scene.add(sceneElements[i]);
+  }
+}
+
 // -------------------------------------------
 
 // ORBIT CONTROLS
 var controls = new THREE.OrbitControls( camera, renderer.domElement );
-controls.autoRotate = true;
-controls.maxDistance = 10;
-controls.maxPolarAngle = 0.4 * Math.PI;
+// controls.autoRotate = true;
+// controls.maxDistance = 10;
+// controls.maxPolarAngle = 0.4 * Math.PI;
 
 // STATS (fps, memory, etc.)
 var stats = new Stats();
@@ -113,8 +138,14 @@ document.body.appendChild( stats.dom );
 
 function init() {
   for (var i = 0; i<21; i++) {
-    addPointLight(0,1.5, -25*i-7, 0xFFFFFF);
+    addPointLight(0,1.5, -25*i, 0xFFFFFF);
   }
+  // addHallway1(0,0,-10,20);
+  scene.add(makeArrowHelper(0, 0, 0, 0, 0, 1, 2, 0x325EFF));
+  scene.add(makeArrowHelper(0, 0, 0, 0, 1, 0, 2, 0x7F4B05));
+  scene.add(makeArrowHelper(0, 0, 0, 1, 0, 0, 2, 0x000000));
+  //
+  addHallwayAsVector(0, 0, 0, 12, 7, -2);
   render();
 }
 
@@ -123,15 +154,8 @@ var increment = 1.1;
 var mesh_just_added;
 function update () {
   stats.begin();
+  // floor.rotation.z += 0.01;
   render();
-  if (-z < 100) {
-    // Add geometry
-    mesh_just_added = addHallway1(0,0,z,Math.log(increment));
-    z -= Math.log(increment);
-    increment += 0.1;
-    // adjust camera target
-    controls.target.copy(mesh_just_added.position);
-  }
   controls.update();
   stats.end();
   requestAnimationFrame(update);
