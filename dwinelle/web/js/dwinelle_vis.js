@@ -14,31 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-W = 300;
-H = 300;
-
-SHRINK = 305;
-X_OFFSET = 0;
-Y_OFFSET = -200;
-
-Z_SCALE = 0.002;
-Z_OFFSET = -35;
-
-var camera = new THREE.PerspectiveCamera(55, W / H, 0.1, 5000);
-var renderer = new THREE.WebGLRenderer();
-renderer.setSize(W, H);
-document.getElementById('vis').appendChild(renderer.domElement);
-
-camera.position.set(-300, 180, 180);
-camera.lookAt(new THREE.Vector3(0, 0, 0));
-
-var material = new THREE.LineBasicMaterial({ color: 0x000000 });
-var hilight = new THREE.LineBasicMaterial({ color: 0x0087C6, linewidth: 2 });
-var faded = new THREE.LineBasicMaterial({ color: 0xbfbfbf });
-var srcSphere = new THREE.MeshBasicMaterial({ color: 0x157e2d });
-var dstSphere = new THREE.MeshBasicMaterial({ color: 0x7e1515 });
-
 function convertVec(x, y, z) {
+    var SHRINK = 305;
+    var X_OFFSET = 0;
+    var Y_OFFSET = -200;
+    var Z_SCALE = 0.002;
+    var Z_OFFSET = -35;
+    // return new THREE.Vector3(x,y,z);
     return new THREE.Vector3(x / SHRINK + X_OFFSET,
         z * Z_SCALE + Z_OFFSET,
         -(y / SHRINK + Y_OFFSET));
@@ -93,10 +75,11 @@ function endSphere(ap, bp, fraction, m) {
     return sphere;
 }
 
-var scene = null;
 function genScene(path, startFrac, endFrac) {
+    // Returns a scene containing the full path
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0xffffff);
+    console.log(path);
 
     for (var edge_str in el) {
         var s = edge_str.split(' ');
@@ -111,6 +94,7 @@ function genScene(path, startFrac, endFrac) {
 
         if (ai >= 0 && bi >= 0 && Math.abs(ai - bi) === 1) {
             if (path.length === 2) {
+                console.log("it's 2");
                 var sf = (bi === 0) ? 1 - startFrac : startFrac;
                 var ef = (bi === 1) ? 1 - endFrac : endFrac;
                 tripleSplit(scene, ap, bp, sf, ef, faded, hilight);
@@ -132,41 +116,72 @@ function genScene(path, startFrac, endFrac) {
                 scene.add(makeLine(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z, hilight));
             }
         } else {
+            var m = null;
             if (path.length === 0) {
-                var m = material;
+                m = material;
             } else {
-                var m = faded;
+                m = faded;
             }
             var line = makeLine(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z, m);
             scene.add(line);
         }
     }
 }
-genScene([], 0, 0);
 
-controls = new THREE.OrbitControls(camera, renderer.domElement);
-
-function animate() {
-    requestAnimationFrame(animate);
-    controls.update();
-    render();
+// Animate function
+// Note: I structured it as a factory so that
+// it can be called inside init() so we can avoid
+// too many global variables
+function animateFactory(renderer, controls, stats, camera) {
+    var animate = function () {
+        stats.begin();
+        controls.update();
+        renderer.render(scene, camera);
+        stats.end();
+        requestAnimationFrame(animate);
+    };
+    return animate;
 }
 
-function render() {
-    renderer.render(scene, camera);
-}
-
-animate();
-
-function onWindowResize() {
+// --------- Code Executed on Page Load ---------
+// The SCENE needs to be global since external functions modify it.
+// Everything else can live inside init() to avoid cluttering the global namespace.
+var scene = null;
+function init() {
     var container = document.getElementById('vis');
     var width = container.clientWidth;
     var height = container.clientHeight;
+    // Instantiate CAMERA object
+    var camera = new THREE.PerspectiveCamera(55, width / height, 0.1, 5000);
+    camera.position.set(-300, 180, 180);
+    camera.lookAt(new THREE.Vector3(0, 0, 0));
+    // Instantiate RENDERER object
+    var renderer = new THREE.WebGLRenderer();
     renderer.setSize(width, height);
-    camera.aspect = width / height;
-    camera.updateProjectionMatrix();
+    container.appendChild(renderer.domElement);
+    // STATS (fps, memory, etc.)
+    var stats = new Stats();
+    stats.showPanel( 0 );
+    document.body.appendChild( stats.dom );
+    // ORBIT CONTROLS
+    var controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.autoRotate = true;
+    // Generate the Geometry of Dwinelle
+    genScene([], 0, 0);
+    // Adjust Size on Window Resize
+    var onWindowResize = function() {
+        var w = container.clientWidth;
+        var h = container.clientHeight;
+        renderer.setSize(w, h);
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+    };
+    window.addEventListener('resize', onWindowResize, false);
+    // Start the Animation Loop
+    var animate = animateFactory(renderer, controls, stats, camera);
+    animate();
 }
 
-window.addEventListener('resize', onWindowResize, false);
-onWindowResize();
+init();
+
 // @license-end

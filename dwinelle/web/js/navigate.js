@@ -200,7 +200,7 @@ for (var k in EDGEROOMS) {
         var rooms = EDGEROOMS[k];
         var l = rooms.length;
         for (var i = 0; i < l; i++) {
-            var name = rooms[i].n
+            var name = rooms[i].n;
             if (name === 'e') {
                 // handle elevator
             } else if (name !== 'u' && name !== 'd') {
@@ -570,10 +570,10 @@ window.onload = function() {
     var dstElem = document.getElementById('dst');
     srcChoice = new Choices(srcElem, {
         choices: ROOMCHOICHES.concat(SRCDEFAULT),
-        sortFilter: sortChoices})
+        sortFilter: sortChoices});
     dstChoice = new Choices(dstElem, {
         choices: ROOMCHOICHES.concat(DSTDEFAULT).concat(MULTICHOICES),
-        sortFilter: sortChoices})
+        sortFilter: sortChoices});
 
     srcElem.addEventListener('change', onChoiceChange);
     dstElem.addEventListener('change', onChoiceChange);
@@ -612,8 +612,8 @@ window.onload = function() {
         srcChoice.setValueByChoice('');
         dstChoice.setValueByChoice('');
         onChoiceChange();
-    }
-}
+    };
+};
 
 function putDirections(dirList, eta) {
     var span_eta = document.getElementById('eta');
