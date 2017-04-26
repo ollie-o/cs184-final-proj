@@ -93,31 +93,79 @@ function addPointLight(x,y,z, color) {
   scene.add(pointLight);
 }
 
+function addArrowHelper(ax, ay, az, bx, by, bz, length, hex) {
+  if (hex === undefined) {hex = 0x325EFF;}
+  if (length === undefined) {length = Math.sqrt( Math.pow(ax-bx,2) + Math.pow(ay-by,2) + Math.pow(az-bz,2));}
+  var dir = new THREE.Vector3( bx-ax, by-ay, bz-az );
+  //normalize the direction vector (convert to vector of length 1)
+  dir.normalize();
+  var origin = new THREE.Vector3( ax, ay, az );
+  scene.add(new THREE.ArrowHelper( dir, origin, length, hex));
+}
+
 function makeArrowHelper(ax, ay, az, bx, by, bz, length, hex) {
-  var dir = new THREE.Vector3( bx, by, bz );
+  if (hex === undefined) {hex = 0x325EFF;}
+  if (length === undefined) {length = Math.sqrt( Math.pow(ax-bx,2) + Math.pow(ay-by,2) + Math.pow(az-bz,2));}
+  var dir = new THREE.Vector3( bx-ax, by-ay, bz-az );
   //normalize the direction vector (convert to vector of length 1)
   dir.normalize();
   var origin = new THREE.Vector3( ax, ay, az );
   return new THREE.ArrowHelper( dir, origin, length, hex);
 }
 
+function addPointLight(x,y,z, color) {
+  // create a point light
+  var pointLight = new THREE.PointLight(color);
+  if (x !== null) {pointLight.position.x = x;}
+  if (y !== null) {pointLight.position.y = y;}
+  if (z !== null) {pointLight.position.z = z;}
+  // add to the scene
+  scene.add(pointLight);
+}
+
+function makePointLight(x,y,z, color) {
+  // create a point light
+  var pointLight = new THREE.PointLight(color);
+  if (x !== null) {pointLight.position.x = x;}
+  if (y !== null) {pointLight.position.y = y;}
+  if (z !== null) {pointLight.position.z = z;}
+  // add to the scene
+  return pointLight;
+}
+
+function getPlaneCenterFromVector(A, m_vec) {
+  var AM = new THREE.Vector3().subVectors( m_vec, A ); // pure direction
+  var dir = AM.clone().normalize();
+  dir.normalize();
+  var AB_len = 1.5;
+  var B = new THREE.Vector3().subVectors( A, new THREE.Vector3(0,AB_len,0) );
+  var BC_len = dir.y * AB_len; // dir.y is equiv. to cos(theta)
+  var BC = new THREE.Vector3().addVectors( B, dir.clone().multiplyScalar(BC_len) );
+  var CP = new THREE.Vector3().addVectors( BC, dir.clone().multiplyScalar(AM.length()) );
+  addArrowHelper(A.x, A.y, A.z, B.x, B.y, B.z);
+  addArrowHelper(B.x, B.y, B.z, CP.x, CP.y, CP.z);
+  return CP;
+}
+
 var floor = null;
 function addHallwayAsVector(ax, ay, az, bx, by, bz) {
-  var length = Math.sqrt( Math.pow(ax-bx,2) + Math.pow(ay-by,2) + Math.pow(az-bz,2));
-  var arrow = makeArrowHelper(ax, ay, az, bx, by, bz, length);
-  console.log(arrow.rotation);
-  var sceneElements = [arrow];
-  // Floor
-  floor = makePlane(5, length, 0, 0, 0, arrow.rotation.x, arrow.rotation.y + Math.PI / 2, arrow.rotation.z, floorMat);
-  var arrowVector = new THREE.Vector3(bx, by, bz);
-  // floor.lookAt(arrowVector);
-  // floor.rotation.x = Math.PI / 2
-  // floor.rotation.z = Math.PI / 2;
+  // var arrow = makeArrowHelper(ax, ay, az, bx, by, bz);
+  var mx = (ax+bx)/2.0;
+  var my = (ay+by)/2.0;
+  var mz = (az+bz)/2.0;
+  addArrowHelper(ax, ay, az, mx, my, mz);
 
+  var sceneElements = [];
+  var vec = getPlaneCenterFromVector(new THREE.Vector3(ax, ay, az), new THREE.Vector3(mx, my, mz));
+  var arrowVector = new THREE.Vector3(mx, my, mz);
+  // Floor
+  var length = Math.sqrt( Math.pow(ax-bx,2) + Math.pow(ay-by,2) + Math.pow(az-bz,2));
+  floor = makePlane(5, length, vec.x, vec.y, vec.z, null, null, null, floorMat);
+  floor.lookAt(arrowVector);
   sceneElements.push(floor);
-  // var floor2 = makePlane(5, length, 0, 0, 0, Math.PI/4, Math.PI/2, null, plainWhite);
-  // sceneElements.push(floor2);
-  //
+  // Light
+  sceneElements.push(makePointLight(vec.x, vec.y+2.5, vec.z))
+
   for (var i = 0; i < sceneElements.length; i++) {
     scene.add(sceneElements[i]);
   }
@@ -146,6 +194,8 @@ function init() {
   scene.add(makeArrowHelper(0, 0, 0, 1, 0, 0, 2, 0x000000));
   //
   addHallwayAsVector(0, 0, 0, 12, 7, -2);
+  addHallwayAsVector(-12, 0, -9, 12, 7, -2);
+
   render();
 }
 
