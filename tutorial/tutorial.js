@@ -164,7 +164,7 @@ function addHallwayAsVector(ax, ay, az, bx, by, bz) {
   floor.lookAt(arrowVector);
   sceneElements.push(floor);
   // Light
-  sceneElements.push(makePointLight(vec.x, vec.y+2.5, vec.z))
+  sceneElements.push(makePointLight(vec.x, vec.y+2.5, vec.z));
 
   for (var i = 0; i < sceneElements.length; i++) {
     scene.add(sceneElements[i]);
