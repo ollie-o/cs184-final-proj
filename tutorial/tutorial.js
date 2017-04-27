@@ -133,39 +133,46 @@ function makePointLight(x,y,z, color) {
   return pointLight;
 }
 
-function getPlaneCenterFromVector(A, m_vec) {
-  var AM = new THREE.Vector3().subVectors( m_vec, A ); // pure direction
-  var dir = AM.clone().normalize();
-  dir.normalize();
-  var AB_len = 1.5;
-  var B = new THREE.Vector3().subVectors( A, new THREE.Vector3(0,AB_len,0) );
-  var BC_len = dir.y * AB_len; // dir.y is equiv. to cos(theta)
-  var BC = new THREE.Vector3().addVectors( B, dir.clone().multiplyScalar(BC_len) );
-  var CP = new THREE.Vector3().addVectors( BC, dir.clone().multiplyScalar(AM.length()) );
-  addArrowHelper(A.x, A.y, A.z, B.x, B.y, B.z);
-  addArrowHelper(B.x, B.y, B.z, CP.x, CP.y, CP.z);
-  return CP;
+function getPlaneCenterFromVector(A, B) {
+  // Returns PLANECENTER, a point directly below the midpoint
+  // Returns LOOKAT, the point along A,B that the plane's normal
+  //         needs to point to for it to be perpendicular to AB
+  // mid point
+  var mx = (A.x+B.x)/2.0;
+  var my = (A.y+B.y)/2.0;
+  var mz = (A.z+B.z)/2.0;
+  var M = new THREE.Vector3(mx, my, mz);
+  // direction
+  var AM = new THREE.Vector3().subVectors( M, A ); // not normalized
+  var dir = AM.clone().normalize(); // normalized
+  // We now generate other points (see diagram)
+  var MC_len = 1.5;
+  var planeCenter = new THREE.Vector3().subVectors( M, new THREE.Vector3(0,MC_len,0) );
+  var m_lookAt_len = - dir.y * MC_len; // dir.y is equiv. to cos(theta) == CM.dot(CP) == (0,-1,0).dot(AB.normalized())
+  var lookAt = new THREE.Vector3().addVectors( M, dir.clone().multiplyScalar(m_lookAt_len) );
+  // Guide lines for debugging
+  // addArrowHelper(planeCenter.x, planeCenter.y, planeCenter.z, lookAt.x, lookAt.y, lookAt.z, undefined, 0xffff00);
+  // addArrowHelper(planeCenter.x, planeCenter.y, planeCenter.z, mx, my, mz, undefined, 0xffff00);
+  // addArrowHelper(A.x, A.y, A.z, B.x, B.y, B.z, undefined, 0xffff00);
+  // addArrowHelper(B.x, B.y, B.z, planeCenter.x, planeCenter.y, planeCenter.z, undefined, 0xffff00);
+  return [planeCenter, lookAt];
 }
 
 var floor = null;
 function addHallwayAsVector(ax, ay, az, bx, by, bz) {
-  // var arrow = makeArrowHelper(ax, ay, az, bx, by, bz);
-  var mx = (ax+bx)/2.0;
-  var my = (ay+by)/2.0;
-  var mz = (az+bz)/2.0;
-  addArrowHelper(ax, ay, az, mx, my, mz);
-
-  var sceneElements = [];
-  var vec = getPlaneCenterFromVector(new THREE.Vector3(ax, ay, az), new THREE.Vector3(mx, my, mz));
-  var arrowVector = new THREE.Vector3(mx, my, mz);
-  // Floor
   var length = Math.sqrt( Math.pow(ax-bx,2) + Math.pow(ay-by,2) + Math.pow(az-bz,2));
-  floor = makePlane(5, length, vec.x, vec.y, vec.z, null, null, null, floorMat);
-  floor.lookAt(arrowVector);
+  var sceneElements = [];
+  // Calculate orientation for floor
+  var planeCenter_lookAt = getPlaneCenterFromVector(new THREE.Vector3(ax, ay, az), new THREE.Vector3(bx, by, bz));
+  var planeCenter = planeCenter_lookAt[0];
+  var lookAt = planeCenter_lookAt[1];
+  // Floor
+  floor = makePlane(5, length, planeCenter.x, planeCenter.y, planeCenter.z, null, null, null, floorMat);
+  floor.lookAt(lookAt);
   sceneElements.push(floor);
   // Light
-  sceneElements.push(makePointLight(vec.x, vec.y+2.5, vec.z));
-
+  sceneElements.push(makePointLight(planeCenter.x, planeCenter.y+2.5, planeCenter.z));
+  // Add all scene elements at once
   for (var i = 0; i < sceneElements.length; i++) {
     scene.add(sceneElements[i]);
   }
