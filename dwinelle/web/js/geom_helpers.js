@@ -84,21 +84,21 @@ function getPlaneCenterFromVector(A, B) {
   // addArrowHelper(planeCenter.x, planeCenter.y, planeCenter.z, mx, my, mz, undefined, 0xffff00);
   // addArrowHelper(A.x, A.y, A.z, B.x, B.y, B.z, undefined, 0xffff00);
   // addArrowHelper(B.x, B.y, B.z, planeCenter.x, planeCenter.y, planeCenter.z, undefined, 0xffff00);
-  return [planeCenter, lookAt];
+  return [planeCenter, lookAt, dir];
 }
 
 function makeSpaceAsVector(ax, ay, az, bx, by, bz, spaceFn) {
-  console.log("gets called, right?");
   var length = Math.sqrt( Math.pow(ax-bx,2) + Math.pow(ay-by,2) + Math.pow(az-bz,2));
   // Calculate orientation for floor
-  var planeCenter_lookAt = getPlaneCenterFromVector(new THREE.Vector3(ax, ay, az), new THREE.Vector3(bx, by, bz));
-  var planeCenter = planeCenter_lookAt[0];
-  var lookAt = planeCenter_lookAt[1];
+  var useful_vals = getPlaneCenterFromVector(new THREE.Vector3(ax, ay, az), new THREE.Vector3(bx, by, bz));
+  var planeCenter = useful_vals[0];
+  var lookAt = useful_vals[1];
+  var dir = useful_vals[2];
   // Space
   var space = spaceFn(length);
-  space.position.x = planeCenter.x;
-  space.position.y = planeCenter.y;
-  space.position.z = planeCenter.z;
+  space.position.set(planeCenter.x,planeCenter.y,planeCenter.z);
+  space.updateMatrixWorld();  // Get the "up" vector to look along vector
+  space.up = planeCenter.add(space.worldToLocal(dir)).normalize();
   space.lookAt(lookAt);
   return space;
 }
