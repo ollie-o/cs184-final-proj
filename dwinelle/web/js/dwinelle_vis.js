@@ -126,7 +126,7 @@ function genScene(path, startFrac, endFrac) {
             } else {
                 m = faded;
             }
-            var line = makeLine(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z, m)
+            var line = makeLine(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z, m);
             scene.add(line);
             scene.add(makeSpace(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z));
         }
