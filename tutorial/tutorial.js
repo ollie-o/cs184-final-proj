@@ -36,148 +36,6 @@ renderer.setSize(WIDTH, HEIGHT);
 // DOM element.
 container.appendChild(renderer.domElement);
 
-var paintMat = new THREE.MeshLambertMaterial( {color: 0xA8A280, side: THREE.BackSide} );
-var floorMat = new THREE.MeshPhongMaterial( {color: 0x42331F, side: THREE.DoubleSide} );
-floorMat.shininess = 110;
-var plainWhite = new THREE.MeshBasicMaterial({color: 0xFFFFFF, side: THREE.DoubleSide});
-
-function addSphere(radius, segments, rings, color, x, y, z) {
-  // create the sphere's material
-  var sphereMaterial =
-    new THREE.MeshLambertMaterial(
-      {
-        color: 0xCC0000
-      });
-
-  // Create a new mesh with
-  // sphere geometry - we will cover
-  // the sphereMaterial next!
-  var sphere = new THREE.Mesh(
-    new THREE.SphereGeometry(
-      radius,
-      segments,
-      rings),
-    sphereMaterial);
-  if (x !== null) {sphere.position.x = x;}
-  if (y !== null) {sphere.position.y = y;}
-  if (z !== null) {sphere.position.z = z;}
-  // Finally, add the sphere to the scene.
-  scene.add(sphere);
-}
-
-function makePlane(width, height, x, y, z, rotX, rotY, rotZ, material) {
-  var geometry = new THREE.PlaneGeometry( width, height);
-  var mesh = new THREE.Mesh( geometry, material );
-  if (x !== null) {mesh.position.x = x;}
-  if (y !== null) {mesh.position.y = y;}
-  if (z !== null) {mesh.position.z = z;}
-  if (rotX !== null) {mesh.rotation.x = rotX;}
-  if (rotY !== null) {mesh.rotation.y = rotY;}
-  if (rotZ !== null) {mesh.rotation.z = rotZ;}
-  return mesh;
-}
-
-function addHallway1(x,y,z,length) {
-  scene.add(makePlane(length, 2.5, x+2.5, null, z, null, Math.PI/2, null, paintMat)); // Left wall
-  scene.add(makePlane(length, 2.5, x-2.5, null, z, null, -Math.PI/2, null, paintMat)); // Right wall
-  scene.add(makePlane(5, length, null, y-1.25, z, Math.PI/2, null, null, floorMat)); // Floor
-}
-
-function addPointLight(x,y,z, color) {
-  // create a point light
-  var pointLight = new THREE.PointLight(color);
-  if (x !== null) {pointLight.position.x = x;}
-  if (y !== null) {pointLight.position.y = y;}
-  if (z !== null) {pointLight.position.z = z;}
-  // add to the scene
-  scene.add(pointLight);
-}
-
-function addArrowHelper(ax, ay, az, bx, by, bz, length, hex) {
-  if (hex === undefined) {hex = 0x325EFF;}
-  if (length === undefined) {length = Math.sqrt( Math.pow(ax-bx,2) + Math.pow(ay-by,2) + Math.pow(az-bz,2));}
-  var dir = new THREE.Vector3( bx-ax, by-ay, bz-az );
-  //normalize the direction vector (convert to vector of length 1)
-  dir.normalize();
-  var origin = new THREE.Vector3( ax, ay, az );
-  scene.add(new THREE.ArrowHelper( dir, origin, length, hex));
-}
-
-function makeArrowHelper(ax, ay, az, bx, by, bz, length, hex) {
-  if (hex === undefined) {hex = 0x325EFF;}
-  if (length === undefined) {length = Math.sqrt( Math.pow(ax-bx,2) + Math.pow(ay-by,2) + Math.pow(az-bz,2));}
-  var dir = new THREE.Vector3( bx-ax, by-ay, bz-az );
-  //normalize the direction vector (convert to vector of length 1)
-  dir.normalize();
-  var origin = new THREE.Vector3( ax, ay, az );
-  return new THREE.ArrowHelper( dir, origin, length, hex);
-}
-
-function addPointLight(x,y,z, color) {
-  // create a point light
-  var pointLight = new THREE.PointLight(color);
-  if (x !== null) {pointLight.position.x = x;}
-  if (y !== null) {pointLight.position.y = y;}
-  if (z !== null) {pointLight.position.z = z;}
-  // add to the scene
-  scene.add(pointLight);
-}
-
-function makePointLight(x,y,z, color) {
-  // create a point light
-  var pointLight = new THREE.PointLight(color);
-  if (x !== null) {pointLight.position.x = x;}
-  if (y !== null) {pointLight.position.y = y;}
-  if (z !== null) {pointLight.position.z = z;}
-  // add to the scene
-  return pointLight;
-}
-
-function getPlaneCenterFromVector(A, B) {
-  // Returns PLANECENTER, a point directly below the midpoint
-  // Returns LOOKAT, the point along A,B that the plane's normal
-  //         needs to point to for it to be perpendicular to AB
-  // mid point
-  var mx = (A.x+B.x)/2.0;
-  var my = (A.y+B.y)/2.0;
-  var mz = (A.z+B.z)/2.0;
-  var M = new THREE.Vector3(mx, my, mz);
-  // direction
-  var AM = new THREE.Vector3().subVectors( M, A ); // not normalized
-  var dir = AM.clone().normalize(); // normalized
-  // We now generate other points (see diagram)
-  var MC_len = 1.5;
-  var planeCenter = new THREE.Vector3().subVectors( M, new THREE.Vector3(0,MC_len,0) );
-  var m_lookAt_len = - dir.y * MC_len; // dir.y is equiv. to cos(theta) == CM.dot(CP) == (0,-1,0).dot(AB.normalized())
-  var lookAt = new THREE.Vector3().addVectors( M, dir.clone().multiplyScalar(m_lookAt_len) );
-  // Guide lines for debugging
-  // addArrowHelper(planeCenter.x, planeCenter.y, planeCenter.z, lookAt.x, lookAt.y, lookAt.z, undefined, 0xffff00);
-  // addArrowHelper(planeCenter.x, planeCenter.y, planeCenter.z, mx, my, mz, undefined, 0xffff00);
-  // addArrowHelper(A.x, A.y, A.z, B.x, B.y, B.z, undefined, 0xffff00);
-  // addArrowHelper(B.x, B.y, B.z, planeCenter.x, planeCenter.y, planeCenter.z, undefined, 0xffff00);
-  return [planeCenter, lookAt];
-}
-
-var floor = null;
-function addHallwayAsVector(ax, ay, az, bx, by, bz) {
-  var length = Math.sqrt( Math.pow(ax-bx,2) + Math.pow(ay-by,2) + Math.pow(az-bz,2));
-  var sceneElements = [];
-  // Calculate orientation for floor
-  var planeCenter_lookAt = getPlaneCenterFromVector(new THREE.Vector3(ax, ay, az), new THREE.Vector3(bx, by, bz));
-  var planeCenter = planeCenter_lookAt[0];
-  var lookAt = planeCenter_lookAt[1];
-  // Floor
-  floor = makePlane(5, length, planeCenter.x, planeCenter.y, planeCenter.z, null, null, null, floorMat);
-  floor.lookAt(lookAt);
-  sceneElements.push(floor);
-  // Light
-  sceneElements.push(makePointLight(planeCenter.x, planeCenter.y+2.5, planeCenter.z));
-  // Add all scene elements at once
-  for (var i = 0; i < sceneElements.length; i++) {
-    scene.add(sceneElements[i]);
-  }
-}
-
 // -------------------------------------------
 
 // ORBIT CONTROLS
@@ -192,26 +50,18 @@ stats.showPanel( 0 );
 document.body.appendChild( stats.dom );
 
 function init() {
-  for (var i = 0; i<21; i++) {
-    addPointLight(0,1.5, -25*i, 0xFFFFFF);
-  }
-  // addHallway1(0,0,-10,20);
+  // X-Y-Z marker
   scene.add(makeArrowHelper(0, 0, 0, 0, 0, 1, 2, 0x325EFF));
   scene.add(makeArrowHelper(0, 0, 0, 0, 1, 0, 2, 0x7F4B05));
   scene.add(makeArrowHelper(0, 0, 0, 1, 0, 0, 2, 0x000000));
-  //
-  addHallwayAsVector(0, 0, 0, 12, 7, -2);
-  addHallwayAsVector(-12, 0, -9, 12, 7, -2);
-
+  // Testing
+  scene.add(makeSpaceAsVector(0, 0, 0, 0, 0, -20, hallwayType1));
+  scene.add(makeSpaceAsVector(-12, 0, -9, 12, 7, -2, hallwayType1));
   render();
 }
 
-var z = -5;
-var increment = 1.1;
-var mesh_just_added;
 function update () {
   stats.begin();
-  // floor.rotation.z += 0.01;
   render();
   controls.update();
   stats.end();
