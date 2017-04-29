@@ -6,10 +6,10 @@ function hallwayType1(length) {
     space.add(makePointLight(i,0,2.5, space));
   }
   // Floor
-  space.add(makePlane(5  , length, 0, 0   , 0, null, null, Math.PI/2, floorMat));
+  space.add(makePlane(5  , length, 0, 0   , 0, null, null, Math.PI/2, plainLightGray));
   // Left Wall
-  space.add(makePlane(2.5, length, 0,  2.5, 1.25, Math.PI/2, null, Math.PI/2, paintMat));
+  space.add(makePlane(2.5, length, 0,  2.5, 1.25, Math.PI/2, null, Math.PI/2, plainDarkGray));
   // Right Wall
-  space.add(makePlane(2.5, length, 0, -2.5, 1.25, -Math.PI/2, null, Math.PI/2, paintMat));
+  space.add(makePlane(2.5, length, 0, -2.5, 1.25, -Math.PI/2, null, Math.PI/2, plainDarkGray));
   return space;
 }
