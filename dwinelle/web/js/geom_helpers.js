@@ -75,9 +75,9 @@ function getPlaneCenterFromVector(A, B) {
   var AM = new THREE.Vector3().subVectors( M, A ); // not normalized
   var dir = AM.clone().normalize(); // normalized
   // We now generate other points (see diagram)
-  var MC_len = 1.5;
-  var planeCenter = new THREE.Vector3().subVectors( M, new THREE.Vector3(0,MC_len,0) );
-  var m_lookAt_len = - dir.y * MC_len; // dir.y is equiv. to cos(theta) == CM.dot(CP) == (0,-1,0).dot(AB.normalized())
+  var M_planeCenter_len = 1.25;
+  var planeCenter = new THREE.Vector3().subVectors( M, new THREE.Vector3(0,M_planeCenter_len,0) );
+  var m_lookAt_len = - dir.y * M_planeCenter_len; // dir.y is equiv. to cos(theta) == CM.dot(CP) == (0,-1,0).dot(AB.normalized())
   var lookAt = new THREE.Vector3().addVectors( M, dir.clone().multiplyScalar(m_lookAt_len) );
   // Guide lines for debugging
   // addArrowHelper(planeCenter.x, planeCenter.y, planeCenter.z, lookAt.x, lookAt.y, lookAt.z, undefined, 0xffff00);
