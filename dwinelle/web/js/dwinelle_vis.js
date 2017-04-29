@@ -168,6 +168,9 @@ function init() {
     controls.autoRotate = true;
     // Generate the Geometry of Dwinelle
     genScene([], 0, 0);
+    scene.add(makeArrowHelper(0, 0, 0, 0, 0, 1, 2, 0x325EFF));
+    scene.add(makeArrowHelper(0, 0, 0, 0, 1, 0, 2, 0x7F4B05));
+    scene.add(makeArrowHelper(0, 0, 0, 1, 0, 0, 2, 0x000000));
     // Adjust Size on Window Resize
     var onWindowResize = function() {
         var w = container.clientWidth;
