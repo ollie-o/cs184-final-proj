@@ -80,14 +80,15 @@ function getPlaneCenterFromVector(A, B) {
   var m_lookAt_len = - dir.y * MC_len; // dir.y is equiv. to cos(theta) == CM.dot(CP) == (0,-1,0).dot(AB.normalized())
   var lookAt = new THREE.Vector3().addVectors( M, dir.clone().multiplyScalar(m_lookAt_len) );
   // Guide lines for debugging
-  addArrowHelper(planeCenter.x, planeCenter.y, planeCenter.z, lookAt.x, lookAt.y, lookAt.z, undefined, 0xffff00);
+  // addArrowHelper(planeCenter.x, planeCenter.y, planeCenter.z, lookAt.x, lookAt.y, lookAt.z, undefined, 0xffff00);
   // addArrowHelper(planeCenter.x, planeCenter.y, planeCenter.z, mx, my, mz, undefined, 0xffff00);
-  addArrowHelper(A.x, A.y, A.z, B.x, B.y, B.z, undefined, 0xffff00);
+  // addArrowHelper(A.x, A.y, A.z, B.x, B.y, B.z, undefined, 0xffff00);
   // addArrowHelper(B.x, B.y, B.z, planeCenter.x, planeCenter.y, planeCenter.z, undefined, 0xffff00);
   return [planeCenter, lookAt];
 }
 
 function makeSpaceAsVector(ax, ay, az, bx, by, bz, spaceFn) {
+  console.log("gets called, right?");
   var length = Math.sqrt( Math.pow(ax-bx,2) + Math.pow(ay-by,2) + Math.pow(az-bz,2));
   // Calculate orientation for floor
   var planeCenter_lookAt = getPlaneCenterFromVector(new THREE.Vector3(ax, ay, az), new THREE.Vector3(bx, by, bz));

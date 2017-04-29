@@ -26,6 +26,12 @@ function convertVec(x, y, z) {
         -(y / SHRINK + Y_OFFSET));
 }
 
+function makeSpace(ax, ay, az, bx, by, bz) {
+    var a = convertVec(ax, ay, az);
+    var b = convertVec(bx, by, bz);
+    return makeSpaceAsVector(a.x, a.y, a.z, b.x, b.y, b.z, hallwayType1);
+}
+
 function makeLine(ax, ay, az, bx, by, bz, m) {
     var geometry = new THREE.Geometry();
     geometry.vertices.push(convertVec(ax, ay, az));
@@ -79,7 +85,6 @@ function genScene(path, startFrac, endFrac) {
     // Returns a scene containing the full path
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0xffffff);
-    console.log(path);
 
     for (var edge_str in el) {
         var s = edge_str.split(' ');
@@ -94,7 +99,6 @@ function genScene(path, startFrac, endFrac) {
 
         if (ai >= 0 && bi >= 0 && Math.abs(ai - bi) === 1) {
             if (path.length === 2) {
-                console.log("it's 2");
                 var sf = (bi === 0) ? 1 - startFrac : startFrac;
                 var ef = (bi === 1) ? 1 - endFrac : endFrac;
                 tripleSplit(scene, ap, bp, sf, ef, faded, hilight);
@@ -122,8 +126,9 @@ function genScene(path, startFrac, endFrac) {
             } else {
                 m = faded;
             }
-            var line = makeLine(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z, m);
+            var line = makeLine(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z, m)
             scene.add(line);
+            scene.add(makeSpace(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z));
         }
     }
 }
@@ -165,7 +170,7 @@ function init() {
     document.body.appendChild( stats.dom );
     // ORBIT CONTROLS
     var controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.autoRotate = true;
+    controls.autoRotate = false;
     // Generate the Geometry of Dwinelle
     genScene([], 0, 0);
     scene.add(makeArrowHelper(0, 0, 0, 0, 0, 1, 2, 0x325EFF));
