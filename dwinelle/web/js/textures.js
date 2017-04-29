@@ -6,11 +6,11 @@ var dstSphere = new THREE.MeshBasicMaterial({ color: 0x7e1515 });
 
 // New Materials
 
-var paintMat = new THREE.MeshLambertMaterial( {color: 0xA8A280, side: THREE.BackSide} );
-paintMat.transparent = false;
+var paintMat = new THREE.MeshLambertMaterial( {color: 0xA8A280, side: THREE.FrontSide} );
 
 var floorMat = new THREE.MeshPhongMaterial( {color: 0x42331F, side: THREE.DoubleSide} );
 floorMat.shininess = 110;
-floorMat.transparent = false;
 
 var plainWhite = new THREE.MeshBasicMaterial({color: 0xFFFFFF, side: THREE.DoubleSide});
+var plainLightGray = new THREE.MeshBasicMaterial({color: 0xF1F1F1, side: THREE.DoubleSide});
+var plainDarkGray = new THREE.MeshBasicMaterial({color: 0xA9A9A9, side: THREE.DoubleSide});

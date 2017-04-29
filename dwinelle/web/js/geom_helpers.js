@@ -48,6 +48,7 @@ function makePointLight(x,y,z,target,color) {
   // create a point light (color optional, defaults to 0xffffff)
   var pointLight = new THREE.PointLight(color, 2.5);
   pointLight.distance = 7;
+  pointLight.decay = 2;
   if (target !== null) {pointLight.target = target;}
   if (x !== null) {pointLight.position.x = x;}
   if (y !== null) {pointLight.position.y = y;}
