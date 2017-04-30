@@ -90,10 +90,24 @@ function endSphere(ap, bp, fraction, m) {
     return sphere;
 }
 
-function genScene(path, startFrac, endFrac) {
-    // Returns a scene containing the full path
-    scene = new THREE.Scene();
+var oldPath = {};
+function initScene() {
     scene.background = new THREE.Color(0xffffff);
+    for (var edge_str in el) {
+        oldPath[edge_str] = false;
+        var s = edge_str.split(' ');
+        var a = parseInt(s[0], 10);
+        var b = parseInt(s[1], 10);
+        var ap = coords[a];
+        var bp = coords[b];
+        scene.add(makeLine(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z, faded));
+        scene.add(makeSpace(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z, hallwayType1_simple));
+    }
+}
+
+function edgeOnPath(ai,bi) {
+    return ai >= 0 && bi >= 0 && Math.abs(ai - bi) === 1;
+}
 
     for (var edge_str in el) {
         var s = edge_str.split(' ');
@@ -161,7 +175,7 @@ function animateFactory(renderer, controls, stats, camera) {
 // --------- Code Executed on Page Load ---------
 // The SCENE needs to be global since external functions modify it.
 // Everything else can live inside init() to avoid cluttering the global namespace.
-var scene = null;
+var scene = new THREE.Scene();
 function init() {
     var container = document.getElementById('vis');
     var width = container.clientWidth;
@@ -182,7 +196,7 @@ function init() {
     var controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.autoRotate = false;
     // Generate the Geometry of Dwinelle
-    genScene([], 0, 0);
+    initScene();
     scene.add(makeArrowHelper(0, 0, 0, 0, 0, 1, 2, 0x325EFF));
     scene.add(makeArrowHelper(0, 0, 0, 0, 1, 0, 2, 0x7F4B05));
     scene.add(makeArrowHelper(0, 0, 0, 1, 0, 0, 2, 0x000000));
