@@ -15,14 +15,15 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 function convertVec(x, y, z) {
-    var SHRINK = 305;
+    // The data was recorded with z representing UP
+    // 3d rendering uses y as the up direction by convention
+    var SHRINK = 610;
     var X_OFFSET = 0;
     var Y_OFFSET = -200;
-    var Z_SCALE = 0.002;
+    var Z_SHRINK = 1000;
     var Z_OFFSET = -35;
-    // return new THREE.Vector3(x,y,z);
     return new THREE.Vector3(x / SHRINK + X_OFFSET,
-        z * Z_SCALE + Z_OFFSET,
+        z / Z_SHRINK + Z_OFFSET,
         -(y / SHRINK + Y_OFFSET));
 }
 
@@ -105,7 +106,7 @@ function genScene(path, startFrac, endFrac) {
         var ai = path.indexOf(a);
         var bi = path.indexOf(b);
 
-        if (ai >= 0 && bi >= 0 && Math.abs(ai - bi) === 1) {
+        if (ai >= 0 && bi >= 0 && Math.abs(ai - bi) === 1) { // On Path
             if (path.length === 2) {
                 var sf = (bi === 0) ? 1 - startFrac : startFrac;
                 var ef = (bi === 1) ? 1 - endFrac : endFrac;
@@ -128,14 +129,14 @@ function genScene(path, startFrac, endFrac) {
                 scene.add(makeLine(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z, hilight));
                 scene.add(makeSpace(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z, hallwayType1_realistic));
             }
-        } else {
+        } else { // Off Path
             var m = null;
             if (path.length === 0) {
                 m = material;
             } else {
                 m = faded;
             }
-            var line = makeLine(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z, m);
+            var line = makeLine(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z, faded);
             scene.add(line);
             scene.add(makeSpace(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z, hallwayType1_simple));
         }
