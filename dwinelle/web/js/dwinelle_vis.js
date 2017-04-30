@@ -137,8 +137,6 @@ function updateScenePath(path, startFrac, endFrac) {
         var prevEdgeGroup = oldEdges[edge_str];
         var startCamera = null;
         if (edgeOnPath(ai,bi) ) {
-            // Splitting Cases
-            // destroy and re-add every time
             if ( lineNeedsSplitting(path, ai, bi) || !oldPath[edge_str] ) {
                 scene.remove(prevEdgeGroup);
                 // Splitting cases
