@@ -504,7 +504,7 @@ function onChoiceChange() {
     var dst = dstChoice.getValue(true);
 
     if (!src || !dst) {
-        genScene([]);
+        updateScenePath([]);
         history.replaceState("", document.title, window.location.pathname
             + window.location.search);
         return;
@@ -528,7 +528,7 @@ function onChoiceChange() {
     if (foundPath.endEdge.a !== foundPath.path[foundPath.path.length - 1]) {
         endFrac = 1 - endFrac;
     }
-    genScene(foundPath.path, startFrac, endFrac);
+    updateScenePath(foundPath.path, startFrac, endFrac);
 }
 
 // sort the choices list to include bathrooms/main entrances first

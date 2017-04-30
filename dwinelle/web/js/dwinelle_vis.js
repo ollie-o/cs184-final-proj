@@ -71,13 +71,13 @@ function tripleSplit(ap, bp, f1, f2, m1, m2, space1, space2) {
     var m2y = ap.y + f2 * (bp.y - ap.y);
     var m2z = ap.z + f2 * (bp.z - ap.z);
 
-    meshes.add(makeLine(ap.x, ap.y, ap.z, m1x, m1y, m1z, m1));
+    // meshes.add(makeLine(ap.x, ap.y, ap.z, m1x, m1y, m1z, m1));
     meshes.add(makeSpace(ap.x, ap.y, ap.z, m1x, m1y, m1z, space1));
 
     meshes.add(makeLine(m1x, m1y, m1z, m2x, m2y, m2z, m2));
     meshes.add(makeSpace(m1x, m1y, m1z, m2x, m2y, m2z, space2));
 
-    meshes.add(makeLine(m2x, m2y, m2z, bp.x, bp.y, bp.z, m1));
+    // meshes.add(makeLine(m2x, m2y, m2z, bp.x, bp.y, bp.z, m1));
     meshes.add(makeSpace(m2x, m2y, m2z, bp.x, bp.y, bp.z, space1));
     return meshes;
 }
@@ -120,7 +120,7 @@ function lineNeedsSplitting(path, ai, bi) {
     return (path.length === 2) || (ai === 0) || (ai === path.length - 1) || (bi === 0) || (bi === path.length - 1);
 }
 
-function genScene(path, startFrac, endFrac) {
+function updateScenePath(path, startFrac, endFrac) {
     // Returns a scene containing the full path
     for (var edge_str in el) {
         var s = edge_str.split(' ');
@@ -134,8 +134,8 @@ function genScene(path, startFrac, endFrac) {
         var bi = path.indexOf(b);
 
         var edgeGroup = new THREE.Group();
-        edgeGroup.name = edge_str;
         var prevEdgeGroup = oldEdges[edge_str];
+        var startCamera = null;
         if (edgeOnPath(ai,bi) ) {
             // Splitting Cases
             // destroy and re-add every time
@@ -149,12 +149,20 @@ function genScene(path, startFrac, endFrac) {
                     edgeGroup.add(endSphere(ap, bp, sf, srcSphere));
                     edgeGroup.add(endSphere(ap, bp, ef, dstSphere));
                 } else if (ai === 0) {
+                    startCamera = (new THREE.Vector3()).lerpVectors(bp, ap, startFrac);
+                    camera.position.copy(convertVec(startCamera.x,startCamera.y,startCamera.z));
+                    controls.target = convertVec(bp.x,bp.y,bp.z);
                     edgeGroup.add(splitLine(ap, bp, startFrac, faded, hilight, hallwayType1_simple, hallwayType1_realistic));
                     edgeGroup.add(endSphere(ap, bp, startFrac, srcSphere));
                 } else if (ai === path.length - 1) {
                     edgeGroup.add(splitLine(ap, bp, endFrac, faded, hilight, hallwayType1_simple, hallwayType1_realistic));
                     edgeGroup.add(endSphere(ap, bp, endFrac, dstSphere));
                 } else if (bi === 0) {
+                    console.log(bp);
+                    startCamera = (new THREE.Vector3()).lerpVectors(ap, bp, 1 - startFrac);
+                    console.log(startCamera);
+                    camera.position.copy(convertVec(startCamera.x,startCamera.y,startCamera.z));
+                    controls.target = convertVec(ap.x,ap.y,ap.z);
                     edgeGroup.add(splitLine(ap, bp, 1 - startFrac, hilight, faded, hallwayType1_realistic, hallwayType1_simple));
                     edgeGroup.add(endSphere(ap, bp, 1 - startFrac, srcSphere));
                 } else if (bi === path.length - 1) {
@@ -196,18 +204,22 @@ function animateFactory(renderer, controls, stats, camera) {
 
 // --------- Code Executed on Page Load ---------
 // The SCENE needs to be global since external functions modify it.
+// The CAMERA and CONTROLS need to be global since we need to follow the path in GENSCENE().
 // Everything else can live inside init() to avoid cluttering the global namespace.
-var scene = new THREE.Scene();
+var scene = null;
+var camera = null;
+var controls = null;
+var renderer = null;
 function init() {
     var container = document.getElementById('vis');
     var width = container.clientWidth;
     var height = container.clientHeight;
     // Instantiate CAMERA object
-    var camera = new THREE.PerspectiveCamera(55, width / height, 0.1, 5000);
+    camera = new THREE.PerspectiveCamera(55, width / height, 0.1, 5000);
     camera.position.set(-300, 180, 180);
     camera.lookAt(new THREE.Vector3(0, 0, 0));
     // Instantiate RENDERER object
-    var renderer = new THREE.WebGLRenderer();
+    renderer = new THREE.WebGLRenderer();
     renderer.setSize(width, height);
     container.appendChild(renderer.domElement);
     // STATS (fps, memory, etc.)
@@ -215,9 +227,10 @@ function init() {
     stats.showPanel( 0 );
     document.body.appendChild( stats.dom );
     // ORBIT CONTROLS
-    var controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.autoRotate = false;
     // Generate the Geometry of Dwinelle
+    scene = new THREE.Scene();
     initScene();
     scene.add(makeArrowHelper(0, 0, 0, 0, 0, 1, 2, 0x325EFF));
     scene.add(makeArrowHelper(0, 0, 0, 0, 1, 0, 2, 0x7F4B05));
