@@ -3,9 +3,9 @@ function hallwayType1_simple(length) {
   // Floor
   space.add(makePlane(5  , length, 0   , 0   , 0 , null, null     , null, plainLightGray));
   // Left Wall
-  space.add(makePlane(2.5, length, 2.5 , 0, 1.25, null, Math.PI/2 , null, plainDarkGray));
+  space.add(makePlane(2.5, Math.max(length-5,0), 2.5 , 0, 1.25, null, Math.PI/2 , null, plainDarkGray));
   // Right Wall
-  space.add(makePlane(2.5, length, -2.5, 0, 1.25, null, -Math.PI/2, null, plainDarkGray));
+  space.add(makePlane(2.5, Math.max(length-5,0), -2.5, 0, 1.25, null, -Math.PI/2, null, plainDarkGray));
   return space;
 }
 
@@ -18,8 +18,8 @@ function hallwayType1_realistic(length) {
   // Floor
   space.add(makePlane(5  , length, 0   , 0   , 0 , null, null     , null, floorMat));
   // Left Wall
-  space.add(makePlane(2.5, length, 2.5 , 0, 1.25, null, Math.PI/2 , null, paintMat));
+  space.add(makePlane(2.5, Math.max(length-5,0), 2.5 , 0, 1.25, null, Math.PI/2 , null, paintMat));
   // Right Wall
-  space.add(makePlane(2.5, length, -2.5, 0, 1.25, null, -Math.PI/2, null, paintMat));
+  space.add(makePlane(2.5, Math.max(length-5,0), -2.5, 0, 1.25, null, -Math.PI/2, null, paintMat));
   return space;
 }
