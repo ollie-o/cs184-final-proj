@@ -6,7 +6,7 @@ var dstSphere = new THREE.MeshBasicMaterial({ color: 0x7e1515 });
 
 // New Materials
 
-var paintMat = new THREE.MeshLambertMaterial( {color: 0xA8A280, side: THREE.FrontSide} );
+var paintMat = new THREE.MeshLambertMaterial( {color: 0xA8A280, side: THREE.BackSide} );
 
 var floorMat = new THREE.MeshPhongMaterial( {color: 0x42331F, side: THREE.DoubleSide} );
 floorMat.shininess = 110;

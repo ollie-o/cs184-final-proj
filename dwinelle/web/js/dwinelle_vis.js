@@ -26,10 +26,10 @@ function convertVec(x, y, z) {
         -(y / SHRINK + Y_OFFSET));
 }
 
-function makeSpace(ax, ay, az, bx, by, bz) {
+function makeSpace(ax, ay, az, bx, by, bz, spaceFn) {
     var a = convertVec(ax, ay, az);
     var b = convertVec(bx, by, bz);
-    return makeSpaceAsVector(a.x, a.y, a.z, b.x, b.y, b.z, hallwayType1);
+    return makeSpaceAsVector(a.x, a.y, a.z, b.x, b.y, b.z, spaceFn);
 }
 
 function makeLine(ax, ay, az, bx, by, bz, m) {
@@ -40,17 +40,20 @@ function makeLine(ax, ay, az, bx, by, bz, m) {
     return new THREE.Line(geometry, m);
 }
 
-function splitLine(scene, ap, bp, fraction, m1, m2) {
+function splitLine(scene, ap, bp, fraction, m1, m2, space1, space2) {
     var mx = ap.x + fraction * (bp.x - ap.x);
     var my = ap.y + fraction * (bp.y - ap.y);
     var mz = ap.z + fraction * (bp.z - ap.z);
 
     scene.add(makeLine(ap.x, ap.y, ap.z, mx, my, mz, m1));
+    scene.add(makeSpace(ap.x, ap.y, ap.z, mx, my, mz, space1));
+
     scene.add(makeLine(mx, my, mz, bp.x, bp.y, bp.z, m2));
+    scene.add(makeSpace(mx, my, mz, bp.x, bp.y, bp.z, space2));
 }
 
 // needed when the source and destination are on the same edge
-function tripleSplit(scene, ap, bp, f1, f2, m1, m2) {
+function tripleSplit(scene, ap, bp, f1, f2, m1, m2, space1, space2) {
     if (f1 > f2) {
         var t = f1;
         f1 = f2;
@@ -65,8 +68,13 @@ function tripleSplit(scene, ap, bp, f1, f2, m1, m2) {
     var m2z = ap.z + f2 * (bp.z - ap.z);
 
     scene.add(makeLine(ap.x, ap.y, ap.z, m1x, m1y, m1z, m1));
+    scene.add(makeSpace(ap.x, ap.y, ap.z, m1x, m1y, m1z, space1));
+
     scene.add(makeLine(m1x, m1y, m1z, m2x, m2y, m2z, m2));
+    scene.add(makeSpace(m1x, m1y, m1z, m2x, m2y, m2z, space2));
+
     scene.add(makeLine(m2x, m2y, m2z, bp.x, bp.y, bp.z, m1));
+    scene.add(makeSpace(m2x, m2y, m2z, bp.x, bp.y, bp.z, space1));
 }
 
 function endSphere(ap, bp, fraction, m) {
@@ -101,23 +109,24 @@ function genScene(path, startFrac, endFrac) {
             if (path.length === 2) {
                 var sf = (bi === 0) ? 1 - startFrac : startFrac;
                 var ef = (bi === 1) ? 1 - endFrac : endFrac;
-                tripleSplit(scene, ap, bp, sf, ef, faded, hilight);
+                tripleSplit(scene, ap, bp, sf, ef, faded, hilight, hallwayType1_simple, hallwayType1_realistic);
                 scene.add(endSphere(ap, bp, sf, srcSphere));
                 scene.add(endSphere(ap, bp, ef, dstSphere));
             } else if (ai === 0) {
-                splitLine(scene, ap, bp, startFrac, faded, hilight);
+                splitLine(scene, ap, bp, startFrac, faded, hilight, hallwayType1_simple, hallwayType1_realistic);
                 scene.add(endSphere(ap, bp, startFrac, srcSphere));
             } else if (ai === path.length - 1) {
-                splitLine(scene, ap, bp, endFrac, faded, hilight);
+                splitLine(scene, ap, bp, endFrac, faded, hilight, hallwayType1_simple, hallwayType1_realistic);
                 scene.add(endSphere(ap, bp, endFrac, dstSphere));
             } else if (bi === 0) {
-                splitLine(scene, ap, bp, 1 - startFrac, hilight, faded);
+                splitLine(scene, ap, bp, 1 - startFrac, hilight, faded, hallwayType1_realistic, hallwayType1_simple);
                 scene.add(endSphere(ap, bp, 1 - startFrac, srcSphere));
             } else if (bi === path.length - 1) {
-                splitLine(scene, ap, bp, 1 - endFrac, hilight, faded);
+                splitLine(scene, ap, bp, 1 - endFrac, hilight, faded, hallwayType1_realistic, hallwayType1_simple);
                 scene.add(endSphere(ap, bp, 1 - endFrac, dstSphere));
             } else {
                 scene.add(makeLine(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z, hilight));
+                scene.add(makeSpace(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z, hallwayType1_realistic));
             }
         } else {
             var m = null;
@@ -128,7 +137,7 @@ function genScene(path, startFrac, endFrac) {
             }
             var line = makeLine(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z, m);
             scene.add(line);
-            scene.add(makeSpace(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z));
+            scene.add(makeSpace(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z, hallwayType1_simple));
         }
     }
 }
