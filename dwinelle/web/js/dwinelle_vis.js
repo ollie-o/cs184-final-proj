@@ -41,20 +41,23 @@ function makeLine(ax, ay, az, bx, by, bz, m) {
     return new THREE.Line(geometry, m);
 }
 
-function splitLine(scene, ap, bp, fraction, m1, m2, space1, space2) {
+function splitLine(ap, bp, fraction, m1, m2, space1, space2) {
+    var meshes = new THREE.Group();
     var mx = ap.x + fraction * (bp.x - ap.x);
     var my = ap.y + fraction * (bp.y - ap.y);
     var mz = ap.z + fraction * (bp.z - ap.z);
 
-    scene.add(makeLine(ap.x, ap.y, ap.z, mx, my, mz, m1));
-    scene.add(makeSpace(ap.x, ap.y, ap.z, mx, my, mz, space1));
+    meshes.add(makeLine(ap.x, ap.y, ap.z, mx, my, mz, m1));
+    meshes.add(makeSpace(ap.x, ap.y, ap.z, mx, my, mz, space1));
 
-    scene.add(makeLine(mx, my, mz, bp.x, bp.y, bp.z, m2));
-    scene.add(makeSpace(mx, my, mz, bp.x, bp.y, bp.z, space2));
+    meshes.add(makeLine(mx, my, mz, bp.x, bp.y, bp.z, m2));
+    meshes.add(makeSpace(mx, my, mz, bp.x, bp.y, bp.z, space2));
+    return meshes;
 }
 
 // needed when the source and destination are on the same edge
-function tripleSplit(scene, ap, bp, f1, f2, m1, m2, space1, space2) {
+function tripleSplit(ap, bp, f1, f2, m1, m2, space1, space2) {
+    var meshes = new THREE.Group();
     if (f1 > f2) {
         var t = f1;
         f1 = f2;
@@ -68,14 +71,15 @@ function tripleSplit(scene, ap, bp, f1, f2, m1, m2, space1, space2) {
     var m2y = ap.y + f2 * (bp.y - ap.y);
     var m2z = ap.z + f2 * (bp.z - ap.z);
 
-    scene.add(makeLine(ap.x, ap.y, ap.z, m1x, m1y, m1z, m1));
-    scene.add(makeSpace(ap.x, ap.y, ap.z, m1x, m1y, m1z, space1));
+    meshes.add(makeLine(ap.x, ap.y, ap.z, m1x, m1y, m1z, m1));
+    meshes.add(makeSpace(ap.x, ap.y, ap.z, m1x, m1y, m1z, space1));
 
-    scene.add(makeLine(m1x, m1y, m1z, m2x, m2y, m2z, m2));
-    scene.add(makeSpace(m1x, m1y, m1z, m2x, m2y, m2z, space2));
+    meshes.add(makeLine(m1x, m1y, m1z, m2x, m2y, m2z, m2));
+    meshes.add(makeSpace(m1x, m1y, m1z, m2x, m2y, m2z, space2));
 
-    scene.add(makeLine(m2x, m2y, m2z, bp.x, bp.y, bp.z, m1));
-    scene.add(makeSpace(m2x, m2y, m2z, bp.x, bp.y, bp.z, space1));
+    meshes.add(makeLine(m2x, m2y, m2z, bp.x, bp.y, bp.z, m1));
+    meshes.add(makeSpace(m2x, m2y, m2z, bp.x, bp.y, bp.z, space1));
+    return meshes;
 }
 
 function endSphere(ap, bp, fraction, m) {
@@ -83,14 +87,14 @@ function endSphere(ap, bp, fraction, m) {
     var my = ap.y + fraction * (bp.y - ap.y);
     var mz = ap.z + fraction * (bp.z - ap.z);
 
-    var geometry = new THREE.SphereGeometry(2.5);
+    var geometry = new THREE.SphereGeometry(1);
     var sphere = new THREE.Mesh(geometry, m);
-    //sphere.position.set(mx / SHRINK + X_OFFSET, mz * Z_SCALE + Z_OFFSET, -(my / SHRINK + Y_OFFSET));
     sphere.position.copy(convertVec(mx, my, mz));
     return sphere;
 }
 
 var oldPath = {};
+var oldEdges = {};
 function initScene() {
     scene.background = new THREE.Color(0xffffff);
     for (var edge_str in el) {
@@ -100,8 +104,11 @@ function initScene() {
         var b = parseInt(s[1], 10);
         var ap = coords[a];
         var bp = coords[b];
-        scene.add(makeLine(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z, faded));
-        scene.add(makeSpace(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z, hallwayType1_simple));
+        var edgeGroup = new THREE.Group();
+        edgeGroup.name = edge_str;
+        edgeGroup.add(makeSpace(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z, hallwayType1_simple));
+        oldEdges[edge_str] = edgeGroup;
+        scene.add(edgeGroup);
     }
 }
 
@@ -109,6 +116,12 @@ function edgeOnPath(ai,bi) {
     return ai >= 0 && bi >= 0 && Math.abs(ai - bi) === 1;
 }
 
+function lineNeedsSplitting(path, ai, bi) {
+    return (path.length === 2) || (ai === 0) || (ai === path.length - 1) || (bi === 0) || (bi === path.length - 1);
+}
+
+function genScene(path, startFrac, endFrac) {
+    // Returns a scene containing the full path
     for (var edge_str in el) {
         var s = edge_str.split(' ');
         var a = parseInt(s[0], 10);
@@ -120,39 +133,48 @@ function edgeOnPath(ai,bi) {
         var ai = path.indexOf(a);
         var bi = path.indexOf(b);
 
-        if (ai >= 0 && bi >= 0 && Math.abs(ai - bi) === 1) { // On Path
-            if (path.length === 2) {
-                var sf = (bi === 0) ? 1 - startFrac : startFrac;
-                var ef = (bi === 1) ? 1 - endFrac : endFrac;
-                tripleSplit(scene, ap, bp, sf, ef, faded, hilight, hallwayType1_simple, hallwayType1_realistic);
-                scene.add(endSphere(ap, bp, sf, srcSphere));
-                scene.add(endSphere(ap, bp, ef, dstSphere));
-            } else if (ai === 0) {
-                splitLine(scene, ap, bp, startFrac, faded, hilight, hallwayType1_simple, hallwayType1_realistic);
-                scene.add(endSphere(ap, bp, startFrac, srcSphere));
-            } else if (ai === path.length - 1) {
-                splitLine(scene, ap, bp, endFrac, faded, hilight, hallwayType1_simple, hallwayType1_realistic);
-                scene.add(endSphere(ap, bp, endFrac, dstSphere));
-            } else if (bi === 0) {
-                splitLine(scene, ap, bp, 1 - startFrac, hilight, faded, hallwayType1_realistic, hallwayType1_simple);
-                scene.add(endSphere(ap, bp, 1 - startFrac, srcSphere));
-            } else if (bi === path.length - 1) {
-                splitLine(scene, ap, bp, 1 - endFrac, hilight, faded, hallwayType1_realistic, hallwayType1_simple);
-                scene.add(endSphere(ap, bp, 1 - endFrac, dstSphere));
-            } else {
-                scene.add(makeLine(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z, hilight));
-                scene.add(makeSpace(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z, hallwayType1_realistic));
+        var edgeGroup = new THREE.Group();
+        edgeGroup.name = edge_str;
+        var prevEdgeGroup = oldEdges[edge_str];
+        if (edgeOnPath(ai,bi) ) {
+            // Splitting Cases
+            // destroy and re-add every time
+            if ( lineNeedsSplitting(path, ai, bi) || !oldPath[edge_str] ) {
+                scene.remove(prevEdgeGroup);
+                // Splitting cases
+                if (path.length === 2) {
+                    var sf = (bi === 0) ? 1 - startFrac : startFrac;
+                    var ef = (bi === 1) ? 1 - endFrac : endFrac;
+                    edgeGroup = tripleSplit(ap, bp, sf, ef, faded, hilight, hallwayType1_simple, hallwayType1_realistic);
+                    edgeGroup.add(endSphere(ap, bp, sf, srcSphere));
+                    edgeGroup.add(endSphere(ap, bp, ef, dstSphere));
+                } else if (ai === 0) {
+                    edgeGroup.add(splitLine(ap, bp, startFrac, faded, hilight, hallwayType1_simple, hallwayType1_realistic));
+                    edgeGroup.add(endSphere(ap, bp, startFrac, srcSphere));
+                } else if (ai === path.length - 1) {
+                    edgeGroup.add(splitLine(ap, bp, endFrac, faded, hilight, hallwayType1_simple, hallwayType1_realistic));
+                    edgeGroup.add(endSphere(ap, bp, endFrac, dstSphere));
+                } else if (bi === 0) {
+                    edgeGroup.add(splitLine(ap, bp, 1 - startFrac, hilight, faded, hallwayType1_realistic, hallwayType1_simple));
+                    edgeGroup.add(endSphere(ap, bp, 1 - startFrac, srcSphere));
+                } else if (bi === path.length - 1) {
+                    edgeGroup.add(splitLine(ap, bp, 1 - endFrac, hilight, faded, hallwayType1_realistic, hallwayType1_simple));
+                    edgeGroup.add(endSphere(ap, bp, 1 - endFrac, dstSphere));
+                } else if (!oldPath[edge_str]) { // Non-splitting case
+                    edgeGroup.add(makeLine(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z, hilight));
+                    edgeGroup.add(makeSpace(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z, hallwayType1_realistic));
+                }
+                oldEdges[edge_str] = edgeGroup;
+                scene.add(edgeGroup);
             }
-        } else { // Off Path
-            var m = null;
-            if (path.length === 0) {
-                m = material;
-            } else {
-                m = faded;
+            oldPath[edge_str] = true; // definitely on path now
+        } else {
+            if (oldPath[edge_str]) { // destroy and re-add iff was on path and now is not
+                scene.remove(prevEdgeGroup);
+                edgeGroup.add(makeSpace(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z, hallwayType1_simple));
+                scene.add(edgeGroup);
             }
-            var line = makeLine(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z, faded);
-            scene.add(line);
-            scene.add(makeSpace(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z, hallwayType1_simple));
+            oldPath[edge_str] = false; // definitely off path now
         }
     }
 }
