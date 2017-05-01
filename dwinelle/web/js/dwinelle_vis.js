@@ -161,7 +161,6 @@ function updateScenePath(path, sf, ef) {
 
         var edgeGroup = new THREE.Group();
         var prevEdgeGroup = oldEdges[edge_str];
-        var startCamera = null;
 
         if (edgeOnPath(ai,bi) ) {
             if ( lineNeedsSplitting(path, ai, bi) || !oldPath[edge_str] ) {
@@ -198,6 +197,25 @@ function updateScenePath(path, sf, ef) {
             oldPath[edge_str] = false; // definitely off path now
         }
     }
+    // turn start into lerped start (using sf <- startFrac)
+    // turn end into lerped end (using ef)
+    var start = convertVec(coords[path[0]]);
+    var next = convertVec(coords[path[1]]);
+    start = (new THREE.Vector3()).lerpVectors(start, next, sf);
+    followPath(start, next, 3000);
+}
+
+var tween;
+function followPath(startVec, endVec, time) {
+    var dir = (new THREE.Vector3()).subVectors(endVec, startVec).normalize();
+    camera.position.copy(startVec);
+    controls.target = (new THREE.Vector3()).addVectors(endVec, dir); // look a little bit past the next vertex
+    tween = new TWEEN.Tween(startVec).to(endVec, time);
+    tween.onUpdate(function(){
+        // console.log(startVec);
+        camera.position.copy(startVec);
+    });
+    tween.start();
 }
 
 // Animate function
@@ -209,6 +227,7 @@ function animateFactory(renderer, controls, stats, camera) {
         stats.begin();
         controls.update();
         renderer.render(scene, camera);
+        TWEEN.update();
         stats.end();
         requestAnimationFrame(animate);
     };
