@@ -53,9 +53,6 @@ function makePointLight(x,y,z,target,color) {
   if (x !== null) {pointLight.position.x = x;}
   if (y !== null) {pointLight.position.y = y;}
   if (z !== null) {pointLight.position.z = z;}
-  var sphereSize = 0.3;
-  var pointLightHelper = new THREE.PointLightHelper( pointLight, sphereSize );
-  scene.add( pointLightHelper );
   // add to the scene
   return pointLight;
 }
