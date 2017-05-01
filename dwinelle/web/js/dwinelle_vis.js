@@ -37,7 +37,6 @@ function makeLine(ax, ay, az, bx, by, bz, m) {
     var geometry = new THREE.Geometry();
     geometry.vertices.push(convertVec(ax, ay, az));
     geometry.vertices.push(convertVec(bx, by, bz));
-
     return new THREE.Line(geometry, m);
 }
 
@@ -158,7 +157,7 @@ function updateScenePath(path, sf, ef) {
         var spaceFn = hallwayType1_simple;
         var pathSpaceFn = hallwayType1_realistic;
 
-        var edgeGroup = null;
+        var edgeGroup = new THREE.Group();
         var prevEdgeGroup = oldEdges[edge_str];
         var startCamera = null;
 
@@ -177,11 +176,11 @@ function updateScenePath(path, sf, ef) {
                 } else if (ai === path.length - 1) {
                     edgeGroup = splitLine(ap, bp, ef, faded, hilight, spaceFn, pathSpaceFn, dstSphere);
                 } else if (bi === 0) {
-                    edgeGroup = splitLine(bp, ap, sf, hilight, faded, spaceFn, pathSpaceFn, srcSphere);
+                    edgeGroup = splitLine(bp, ap, sf, faded, hilight, spaceFn, pathSpaceFn, srcSphere);
                 } else if (bi === path.length - 1) {
-                    edgeGroup = splitLine(bp, ap, ef, hilight, faded, spaceFn, pathSpaceFn, dstSphere);
+                    edgeGroup = splitLine(bp, ap, ef, faded, hilight, spaceFn, pathSpaceFn, dstSphere);
                 } else if (!oldPath[edge_str]) { // Non-splitting case
-                    edgeGroup = makeSpace(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z, pathSpaceFn);
+                    edgeGroup.add(makeSpace(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z, pathSpaceFn));
                     edgeGroup.add(makeLine(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z, hilight));
                 }
                 oldEdges[edge_str] = edgeGroup;
@@ -191,7 +190,7 @@ function updateScenePath(path, sf, ef) {
         } else {
             if (oldPath[edge_str]) { // destroy and re-add iff was on path and now is not
                 scene.remove(prevEdgeGroup);
-                edgeGroup.add(makeSpace(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z, spaceFn));
+                edgeGroup = makeSpace(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z, spaceFn);
                 scene.add(edgeGroup);
             }
             oldPath[edge_str] = false; // definitely off path now

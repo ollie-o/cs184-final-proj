@@ -492,7 +492,7 @@ function directionList(nodelist, startRoom, endRoom, endEdge) {
 
     var d = 'left';
     if (endEdge.b === nodelist[nodelist.length - 1]) {
-        var d = 'right';
+        d = 'right';
     }
     directions.push('Enter ' + endRoom + ' on your ' + d);
 
