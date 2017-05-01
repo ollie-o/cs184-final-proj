@@ -14,7 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function convertVec(x, y, z) {
+function convertVec(vec) {
+    return convertCoords(vec.x, vec.y, vec.z);
+}
+
+function convertCoords(x, y, z) {
     // The data was recorded with z representing UP
     // 3d rendering uses y as the up direction by convention
     var SHRINK = 610;
@@ -28,15 +32,15 @@ function convertVec(x, y, z) {
 }
 
 function makeSpace(ax, ay, az, bx, by, bz, spaceFn) {
-    var a = convertVec(ax, ay, az);
-    var b = convertVec(bx, by, bz);
+    var a = convertCoords(ax, ay, az);
+    var b = convertCoords(bx, by, bz);
     return makeSpaceAsVector(a.x, a.y, a.z, b.x, b.y, b.z, spaceFn);
 }
 
 function makeLine(ax, ay, az, bx, by, bz, m) {
     var geometry = new THREE.Geometry();
-    geometry.vertices.push(convertVec(ax, ay, az));
-    geometry.vertices.push(convertVec(bx, by, bz));
+    geometry.vertices.push(convertCoords(ax, ay, az));
+    geometry.vertices.push(convertCoords(bx, by, bz));
     return new THREE.Line(geometry, m);
 }
 
@@ -97,20 +101,18 @@ function tripleSplit(ap, bp, f1, f2, line1, line2, space1, space2) {
 }
 
 function endSphereLerp(ap, bp, fraction, m) {
-    var mx = ap.x + fraction * (bp.x - ap.x);
-    var my = ap.y + fraction * (bp.y - ap.y);
-    var mz = ap.z + fraction * (bp.z - ap.z);
+    var mp = (new THREE.Vector3()).lerpVectors(ap,bp,fraction);
 
     var geometry = new THREE.SphereGeometry(1);
     var sphere = new THREE.Mesh(geometry, m);
-    sphere.position.copy(convertVec(mx, my, mz));
+    sphere.position.copy(convertVec(mp));
     return sphere;
 }
 
 function endSphere(x, y, z, m) {
     var geometry = new THREE.SphereGeometry(1);
     var sphere = new THREE.Mesh(geometry, m);
-    sphere.position.copy(convertVec(x, y, z));
+    sphere.position.copy(convertCoords(x, y, z));
     return sphere;
 }
 
