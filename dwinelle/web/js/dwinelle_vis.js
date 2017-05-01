@@ -19,7 +19,7 @@ function convertVec(x, y, z) {
     // 3d rendering uses y as the up direction by convention
     var SHRINK = 610;
     var X_OFFSET = 0;
-    var Y_OFFSET = -200;
+    var Y_OFFSET = -100;
     var Z_SHRINK = 1000;
     var Z_OFFSET = -35;
     return new THREE.Vector3(x / SHRINK + X_OFFSET,
@@ -41,48 +41,63 @@ function makeLine(ax, ay, az, bx, by, bz, m) {
     return new THREE.Line(geometry, m);
 }
 
-function splitLine(ap, bp, fraction, m1, m2, space1, space2) {
+// Since edges can occur mid-way along an edge,
+// lerping is necessary!
+// Current edge is start of path
+//          1-sf      sf
+//     ap ------- m ------> bp    (ai === 0)
+//     bp ------- m ------> ap    (bi === 0)
+// Current edge is end of path
+//          ef        1-ef
+//     bp ------- m ------> ap    (ai === path.length - 1)
+//     ap ------- m ------> bp    (bi === path.length - 1)
+// When we call splitLine()
+//     ap ------- m ------> bp    (abstracted)
+
+// Current edge is start and end of path
+//         sf                 ef
+//     ap ----- m1 ----> m2 ----- bp    (bi === 1)
+//     bp ----- m1 ----> m2 ----- ap    (bi === 0)
+// When we call tripleSplit()
+//     ap ----- m1 ----> m2 ----- bp    (abstracted)
+
+function splitLine(ap, bp, fraction, line1, line2, space1, space2, sphereType) {
+    // Assumes direction     ap --- m --> bp
     var meshes = new THREE.Group();
-    var mx = ap.x + fraction * (bp.x - ap.x);
-    var my = ap.y + fraction * (bp.y - ap.y);
-    var mz = ap.z + fraction * (bp.z - ap.z);
+    var mp = (new THREE.Vector3()).lerpVectors(ap,bp,fraction);
 
-    meshes.add(makeLine(ap.x, ap.y, ap.z, mx, my, mz, m1));
-    meshes.add(makeSpace(ap.x, ap.y, ap.z, mx, my, mz, space1));
+    meshes.add(endSphere(mp.x, mp.y, mp.z, sphereType));
+    meshes.add(makeSpace(ap.x, ap.y, ap.z, mp.x, mp.y, mp.z, space1));
 
-    meshes.add(makeLine(mx, my, mz, bp.x, bp.y, bp.z, m2));
-    meshes.add(makeSpace(mx, my, mz, bp.x, bp.y, bp.z, space2));
+    meshes.add(makeLine(mp.x, mp.y, mp.z, bp.x, bp.y, bp.z, line2));
+    meshes.add(makeSpace(mp.x, mp.y, mp.z, bp.x, bp.y, bp.z, space2));
     return meshes;
 }
 
 // needed when the source and destination are on the same edge
-function tripleSplit(ap, bp, f1, f2, m1, m2, space1, space2) {
+function tripleSplit(ap, bp, f1, f2, line1, line2, space1, space2) {
+    // Assumes going in direction A --> B
     var meshes = new THREE.Group();
     if (f1 > f2) {
-        var t = f1;
-        f1 = f2;
-        f2 = t;
+        f1 = 1 - f1;
+        f2 = 1 - f2;
     }
-    var m1x = ap.x + f1 * (bp.x - ap.x);
-    var m1y = ap.y + f1 * (bp.y - ap.y);
-    var m1z = ap.z + f1 * (bp.z - ap.z);
+    var m1 = (new THREE.Vector3()).lerpVectors(ap,bp,f1);
+    var m2 = (new THREE.Vector3()).lerpVectors(ap,bp,f2);
 
-    var m2x = ap.x + f2 * (bp.x - ap.x);
-    var m2y = ap.y + f2 * (bp.y - ap.y);
-    var m2z = ap.z + f2 * (bp.z - ap.z);
+    meshes.add(makeSpace(ap.x, ap.y, ap.z, m1.x, m1.y, m1.z, space1));
+    meshes.add(endSphere(m1.x, m1.y, m1.z, srcSphere));
 
-    // meshes.add(makeLine(ap.x, ap.y, ap.z, m1x, m1y, m1z, m1));
-    meshes.add(makeSpace(ap.x, ap.y, ap.z, m1x, m1y, m1z, space1));
+    meshes.add(makeLine(m1.x, m1.y, m1.z, m2.x, m2.y, m2.z, line2));
+    meshes.add(makeSpace(m1.x, m1.y, m1.z, m2.x, m2.y, m2.z, space2));
 
-    meshes.add(makeLine(m1x, m1y, m1z, m2x, m2y, m2z, m2));
-    meshes.add(makeSpace(m1x, m1y, m1z, m2x, m2y, m2z, space2));
+    meshes.add(endSphere(m2.x, m2.y, m2.z, dstSphere));
+    meshes.add(makeSpace(m2.x, m2.y, m2.z, bp.x, bp.y, bp.z, space1));
 
-    // meshes.add(makeLine(m2x, m2y, m2z, bp.x, bp.y, bp.z, m1));
-    meshes.add(makeSpace(m2x, m2y, m2z, bp.x, bp.y, bp.z, space1));
     return meshes;
 }
 
-function endSphere(ap, bp, fraction, m) {
+function endSphereLerp(ap, bp, fraction, m) {
     var mx = ap.x + fraction * (bp.x - ap.x);
     var my = ap.y + fraction * (bp.y - ap.y);
     var mz = ap.z + fraction * (bp.z - ap.z);
@@ -90,6 +105,13 @@ function endSphere(ap, bp, fraction, m) {
     var geometry = new THREE.SphereGeometry(1);
     var sphere = new THREE.Mesh(geometry, m);
     sphere.position.copy(convertVec(mx, my, mz));
+    return sphere;
+}
+
+function endSphere(x, y, z, m) {
+    var geometry = new THREE.SphereGeometry(1);
+    var sphere = new THREE.Mesh(geometry, m);
+    sphere.position.copy(convertVec(x, y, z));
     return sphere;
 }
 
@@ -120,7 +142,7 @@ function lineNeedsSplitting(path, ai, bi) {
     return (path.length === 2) || (ai === 0) || (ai === path.length - 1) || (bi === 0) || (bi === path.length - 1);
 }
 
-function updateScenePath(path, startFrac, endFrac) {
+function updateScenePath(path, sf, ef) {
     // Returns a scene containing the full path
     for (var edge_str in el) {
         var s = edge_str.split(' ');
@@ -133,42 +155,34 @@ function updateScenePath(path, startFrac, endFrac) {
         var ai = path.indexOf(a);
         var bi = path.indexOf(b);
 
-        var edgeGroup = new THREE.Group();
+        var spaceFn = hallwayType1_simple;
+        var pathSpaceFn = hallwayType1_realistic;
+
+        var edgeGroup = null;
         var prevEdgeGroup = oldEdges[edge_str];
         var startCamera = null;
+
         if (edgeOnPath(ai,bi) ) {
             if ( lineNeedsSplitting(path, ai, bi) || !oldPath[edge_str] ) {
                 scene.remove(prevEdgeGroup);
                 // Splitting cases
                 if (path.length === 2) {
-                    var sf = (bi === 0) ? 1 - startFrac : startFrac;
-                    var ef = (bi === 1) ? 1 - endFrac : endFrac;
-                    edgeGroup = tripleSplit(ap, bp, sf, ef, faded, hilight, hallwayType1_simple, hallwayType1_realistic);
-                    edgeGroup.add(endSphere(ap, bp, sf, srcSphere));
-                    edgeGroup.add(endSphere(ap, bp, ef, dstSphere));
+                    if (bi === 1) {
+                        edgeGroup = tripleSplit(ap, bp, sf, ef, faded, hilight, spaceFn, pathSpaceFn);
+                    } else {
+                        edgeGroup = tripleSplit(bp, ap, sf, ef, faded, hilight, spaceFn, pathSpaceFn);
+                    }
                 } else if (ai === 0) {
-                    startCamera = (new THREE.Vector3()).lerpVectors(bp, ap, startFrac);
-                    camera.position.copy(convertVec(startCamera.x,startCamera.y,startCamera.z));
-                    controls.target = convertVec(bp.x,bp.y,bp.z);
-                    edgeGroup.add(splitLine(ap, bp, startFrac, faded, hilight, hallwayType1_simple, hallwayType1_realistic));
-                    edgeGroup.add(endSphere(ap, bp, startFrac, srcSphere));
+                    edgeGroup = splitLine(ap, bp, sf, faded, hilight, spaceFn, pathSpaceFn, srcSphere);
                 } else if (ai === path.length - 1) {
-                    edgeGroup.add(splitLine(ap, bp, endFrac, faded, hilight, hallwayType1_simple, hallwayType1_realistic));
-                    edgeGroup.add(endSphere(ap, bp, endFrac, dstSphere));
+                    edgeGroup = splitLine(ap, bp, ef, faded, hilight, spaceFn, pathSpaceFn, dstSphere);
                 } else if (bi === 0) {
-                    console.log(bp);
-                    startCamera = (new THREE.Vector3()).lerpVectors(ap, bp, 1 - startFrac);
-                    console.log(startCamera);
-                    camera.position.copy(convertVec(startCamera.x,startCamera.y,startCamera.z));
-                    controls.target = convertVec(ap.x,ap.y,ap.z);
-                    edgeGroup.add(splitLine(ap, bp, 1 - startFrac, hilight, faded, hallwayType1_realistic, hallwayType1_simple));
-                    edgeGroup.add(endSphere(ap, bp, 1 - startFrac, srcSphere));
+                    edgeGroup = splitLine(bp, ap, sf, hilight, faded, spaceFn, pathSpaceFn, srcSphere);
                 } else if (bi === path.length - 1) {
-                    edgeGroup.add(splitLine(ap, bp, 1 - endFrac, hilight, faded, hallwayType1_realistic, hallwayType1_simple));
-                    edgeGroup.add(endSphere(ap, bp, 1 - endFrac, dstSphere));
+                    edgeGroup = splitLine(bp, ap, ef, hilight, faded, spaceFn, pathSpaceFn, dstSphere);
                 } else if (!oldPath[edge_str]) { // Non-splitting case
+                    edgeGroup = makeSpace(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z, pathSpaceFn);
                     edgeGroup.add(makeLine(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z, hilight));
-                    edgeGroup.add(makeSpace(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z, hallwayType1_realistic));
                 }
                 oldEdges[edge_str] = edgeGroup;
                 scene.add(edgeGroup);
@@ -177,7 +191,7 @@ function updateScenePath(path, startFrac, endFrac) {
         } else {
             if (oldPath[edge_str]) { // destroy and re-add iff was on path and now is not
                 scene.remove(prevEdgeGroup);
-                edgeGroup.add(makeSpace(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z, hallwayType1_simple));
+                edgeGroup.add(makeSpace(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z, spaceFn));
                 scene.add(edgeGroup);
             }
             oldPath[edge_str] = false; // definitely off path now
