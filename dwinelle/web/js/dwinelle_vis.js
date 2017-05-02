@@ -229,7 +229,8 @@ function nextCameraTween(path, index, sf, ef) {
     var end = convertVec(coords[path[index+1]]);
     if (index === 0) {start = (new THREE.Vector3()).lerpVectors(start, end, sf);}
     if (index+1 === path.length - 1) {end = (new THREE.Vector3()).lerpVectors(start, end, 1-ef);}
-    var tween = new TWEEN.Tween(start).to(end, 3000);
+    console.log(start.distanceTo(end));
+    var tween = new TWEEN.Tween(start).to(end, start.distanceTo(end)*1400/walkingSpeedRatio);
     var dir = (new THREE.Vector3()).subVectors(end, start).normalize();
     tween.onUpdate(function(){
         controls.target = start;
@@ -329,6 +330,7 @@ function animateFactory(renderer, controls, stats, camera) {
 // The SCENE needs to be global since external functions modify it.
 // The CAMERA and CONTROLS need to be global since we need to follow the path in GENSCENE().
 // Everything else can live inside init() to avoid cluttering the global namespace.
+var walkingSpeedRatio = 15;
 var scene = null;
 var camera = null;
 var controls = null;
@@ -338,7 +340,7 @@ function init() {
     var width = container.clientWidth;
     var height = container.clientHeight;
     // Instantiate CAMERA object
-    camera = new THREE.PerspectiveCamera(55, width / height, 0.1, 5000);
+    camera = new THREE.PerspectiveCamera(55, width / height, 0.5, 5000);
     camera.position.set(-300, 180, 180);
     camera.lookAt(new THREE.Vector3(0, 0, 0));
     // Instantiate RENDERER object
