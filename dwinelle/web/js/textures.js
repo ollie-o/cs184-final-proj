@@ -10,6 +10,8 @@ var paintMat = new THREE.MeshLambertMaterial( {color: 0xA8A280, side: THREE.Back
 
 var floorMat = new THREE.MeshPhongMaterial( {color: 0x42331F, side: THREE.DoubleSide} );
 floorMat.shininess = 110;
+floorMat.polygonOffset = true;
+floorMat.polygonOffsetFactor = -0.1;
 
 var plainWhite = new THREE.MeshBasicMaterial({color: 0xFFFFFF, side: THREE.DoubleSide});
 var plainLightGray = new THREE.MeshBasicMaterial({color: 0xF1F1F1, side: THREE.DoubleSide});
