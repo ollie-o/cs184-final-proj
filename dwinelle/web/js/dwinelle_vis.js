@@ -199,29 +199,103 @@ function updateScenePath(path, sf, ef) {
     }
     // turn start into lerped start (using sf <- startFrac)
     // turn end into lerped end (using ef)
+
     var start = convertVec(coords[path[0]]);
     var next = convertVec(coords[path[1]]);
+
     start = (new THREE.Vector3()).lerpVectors(start, next, sf);
-    followPath(start, next, 3000);
+    
+    // followPath(start, next, 3000);
+
+    //attempting to chain, path does not do further than one unit
+    // var onemore = convertVec(coords[path[2]]);
+    // followPath(start, next, onemore, 3000);
+
+    // This just shows the very end of the path
+    // for ( var i = 0; i < path.length - 1; i++) {
+    //     console.log(i);
+    //     var start = convertVec(coords[path[i]]);
+    //     var next = convertVec(coords[path[i + 1]]);
+    //     start = (new THREE.Vector3()).lerpVectors(start, next, sf);
+    //     followPath(start, next, 3000);
+    // }
+
+    followPath(path, sf, 3000);
+    
 }
 
-var tween;
-function followPath(startVec, endVec, time) {
-    var dir = (new THREE.Vector3()).subVectors(endVec, startVec).normalize();
+
+// full chain of tweens 
+function followPath(path, sf, time) {
+    var startVec = convertVec(coords[path[0]]);
+    var nextVec = convertVec(coords[path[1]]);
+
+    startVec = (new THREE.Vector3()).lerpVectors(startVec, nextVec, sf);
+
+    var dir = (new THREE.Vector3()).subVectors(nextVec, startVec).normalize();
     camera.position.copy(startVec);
-    controls.target = (new THREE.Vector3()).addVectors(endVec, dir); // look a little bit past the next vertex
-    tween = new TWEEN.Tween(startVec).to(endVec, time);
+    controls.target = (new THREE.Vector3()).addVectors(nextVec, dir); // look a little bit past the next vertex
+    
+    var tween = new TWEEN.Tween(startVec).to(nextVec, time);
+
+    var tweenLinker = tween; 
+    for ( var i = 1; i < path.length - 1; i++) {
+        var vec1 = convertVec(coords[path[i]]);
+        var vec2 = convertVec(coords[path[i+1]]);
+        vec1 = (new THREE.Vector3()).lerpVectors(startVec, nextVec, 1);
+
+        current = new TWEEN.Tween(vec1).to(vec2, time);
+        current.onUpdate(function(){camera.position.copy(vec1);});
+        
+        tweenLinker.chain(current);
+        tweenLinker = current;
+    }
+
     tween.onUpdate(function(){
-        // console.log(startVec);
         camera.position.copy(startVec);
     });
     tween.start();
 }
 
+
+
+// attempting to chain
+// var tween;
+// function followPath(startVec, midVec, endVec, time) {
+//     var dir = (new THREE.Vector3()).subVectors(endVec, startVec).normalize();
+//     camera.position.copy(startVec);
+//     controls.target = (new THREE.Vector3()).addVectors(endVec, dir); // look a little bit past the next vertex
+    
+//     tween = new TWEEN.Tween(startVec).to(midVec, time);
+//     tween_next = new TWEEN.Tween(midVec).to(endVec, time);
+//     tween.chain(tween_next);
+    
+//     tween.onUpdate(function(){
+//         camera.position.copy(startVec);
+
+//     });
+//     tween.start();
+// }
+
+// var tween;
+// function followPath(startVec, endVec, time) {
+//     console.log("What the what");
+//     var dir = (new THREE.Vector3()).subVectors(endVec, startVec).normalize();
+//     camera.position.copy(startVec);
+//     controls.target = (new THREE.Vector3()).addVectors(endVec, dir); // look a little bit past the next vertex
+//     var tween = new TWEEN.Tween(startVec).to(endVec, time);
+//     tween.onUpdate(function(){
+//         camera.position.copy(startVec);
+
+//     });
+//     tween.start();
+// }
+
 // Animate function
 // Note: I structured it as a factory so that
 // it can be called inside init() so we can avoid
 // too many global variables
+
 function animateFactory(renderer, controls, stats, camera) {
     var animate = function () {
         stats.begin();
