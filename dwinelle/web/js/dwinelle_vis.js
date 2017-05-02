@@ -200,11 +200,11 @@ function updateScenePath(path, sf, ef) {
     // turn start into lerped start (using sf <- startFrac)
     // turn end into lerped end (using ef)
 
-    var start = convertVec(coords[path[0]]);
-    var next = convertVec(coords[path[1]]);
+    // var start = convertVec(coords[path[0]]);
+    // var next = convertVec(coords[path[1]]);
 
-    start = (new THREE.Vector3()).lerpVectors(start, next, sf);
-    
+    // start = (new THREE.Vector3()).lerpVectors(start, next, sf);
+
     // followPath(start, next, 3000);
 
     //attempting to chain, path does not do further than one unit
@@ -220,42 +220,59 @@ function updateScenePath(path, sf, ef) {
     //     followPath(start, next, 3000);
     // }
 
-    followPath(path, sf, 3000);
-    
-}
-
-
-// full chain of tweens 
-function followPath(path, sf, time) {
-    var startVec = convertVec(coords[path[0]]);
-    var nextVec = convertVec(coords[path[1]]);
-
-    startVec = (new THREE.Vector3()).lerpVectors(startVec, nextVec, sf);
-
-    var dir = (new THREE.Vector3()).subVectors(nextVec, startVec).normalize();
-    camera.position.copy(startVec);
-    controls.target = (new THREE.Vector3()).addVectors(nextVec, dir); // look a little bit past the next vertex
-    
-    var tween = new TWEEN.Tween(startVec).to(nextVec, time);
-
-    var tweenLinker = tween; 
-    for ( var i = 1; i < path.length - 1; i++) {
-        var vec1 = convertVec(coords[path[i]]);
-        var vec2 = convertVec(coords[path[i+1]]);
-        vec1 = (new THREE.Vector3()).lerpVectors(startVec, nextVec, 1);
-
-        current = new TWEEN.Tween(vec1).to(vec2, time);
-        current.onUpdate(function(){camera.position.copy(vec1);});
-        
-        tweenLinker.chain(current);
-        tweenLinker = current;
-    }
-
-    tween.onUpdate(function(){
-        camera.position.copy(startVec);
-    });
+    var tween = nextCameraTween(path, 0, sf, ef);
     tween.start();
 }
+
+function nextCameraTween(path, index, sf, ef) {
+    var start = convertVec(coords[path[index]]);
+    var end = convertVec(coords[path[index+1]]);
+    if (index === 0) {start = (new THREE.Vector3()).lerpVectors(start, end, sf);}
+    if (index+1 === path.length - 1) {end = (new THREE.Vector3()).lerpVectors(start, end, 1-ef);}
+    var tween = new TWEEN.Tween(start).to(end, 3000);
+    var dir = (new THREE.Vector3()).subVectors(end, start).normalize();
+    tween.onUpdate(function(){
+        controls.target = start;
+    });
+    if (index === path.length - 2) {
+        return tween;
+    } else {
+        return tween.chain(nextCameraTween(path,index+1, sf, ef));
+    }
+}
+
+
+// full chain of tweens
+// function followPath(path, sf, time) {
+//     var startVec = convertVec(coords[path[0]]);
+//     var nextVec = convertVec(coords[path[1]]);
+
+//     startVec = (new THREE.Vector3()).lerpVectors(startVec, nextVec, sf);
+
+//     var dir = (new THREE.Vector3()).subVectors(nextVec, startVec).normalize();
+//     camera.position.copy(startVec);
+//     controls.target = (new THREE.Vector3()).addVectors(nextVec, dir); // look a little bit past the next vertex
+
+//     var tween = new TWEEN.Tween(startVec).to(nextVec, time);
+
+//     var tweenLinker = tween;
+//     for ( var i = 1; i < path.length - 1; i++) {
+//         var vec1 = convertVec(coords[path[i]]);
+//         var vec2 = convertVec(coords[path[i+1]]);
+//         vec1 = (new THREE.Vector3()).lerpVectors(startVec, nextVec, 1);
+
+//         current = new TWEEN.Tween(vec1).to(vec2, time);
+//         current.onUpdate(function(){camera.position.copy(vec1);});
+
+//         tweenLinker.chain(current);
+//         tweenLinker = current;
+//     }
+
+    // tween.onUpdate(function(){
+    //     camera.position.copy(startVec);
+    // });
+//     tween.start();
+// }
 
 
 
@@ -265,11 +282,11 @@ function followPath(path, sf, time) {
 //     var dir = (new THREE.Vector3()).subVectors(endVec, startVec).normalize();
 //     camera.position.copy(startVec);
 //     controls.target = (new THREE.Vector3()).addVectors(endVec, dir); // look a little bit past the next vertex
-    
+
 //     tween = new TWEEN.Tween(startVec).to(midVec, time);
 //     tween_next = new TWEEN.Tween(midVec).to(endVec, time);
 //     tween.chain(tween_next);
-    
+
 //     tween.onUpdate(function(){
 //         camera.position.copy(startVec);
 
@@ -335,6 +352,7 @@ function init() {
     // ORBIT CONTROLS
     controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.autoRotate = false;
+    controls.maxDistance = 1;
     // Generate the Geometry of Dwinelle
     scene = new THREE.Scene();
     initScene();
