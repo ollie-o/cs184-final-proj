@@ -14,108 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function convertVec(vec) {
-    return convertCoords(vec.x, vec.y, vec.z);
-}
-
-function convertCoords(x, y, z) {
-    // The data was recorded with z representing UP
-    // 3d rendering uses y as the up direction by convention
-    var SHRINK = 610;
-    var X_OFFSET = 0;
-    var Y_OFFSET = -100;
-    var Z_SHRINK = 1000;
-    var Z_OFFSET = -35;
-    return new THREE.Vector3(x / SHRINK + X_OFFSET,
-        z / Z_SHRINK + Z_OFFSET,
-        -(y / SHRINK + Y_OFFSET));
-}
-
-function makeSpace(ax, ay, az, bx, by, bz, spaceFn) {
-    var a = convertCoords(ax, ay, az);
-    var b = convertCoords(bx, by, bz);
-    return makeSpaceAsVector(a.x, a.y, a.z, b.x, b.y, b.z, spaceFn);
-}
-
-function makeLine(ax, ay, az, bx, by, bz, m) {
-    var geometry = new THREE.Geometry();
-    geometry.vertices.push(convertCoords(ax, ay, az));
-    geometry.vertices.push(convertCoords(bx, by, bz));
-    return new THREE.Line(geometry, m);
-}
-
-// Since edges can occur mid-way along an edge,
-// lerping is necessary!
-// Current edge is start of path
-//          1-sf      sf
-//     ap ------- m ------> bp    (ai === 0)
-//     bp ------- m ------> ap    (bi === 0)
-// Current edge is end of path
-//          ef        1-ef
-//     bp ------- m ------> ap    (ai === path.length - 1)
-//     ap ------- m ------> bp    (bi === path.length - 1)
-// When we call splitLine()
-//     ap ------- m ------> bp    (abstracted)
-
-// Current edge is start and end of path
-//         sf                 ef
-//     ap ----- m1 ----> m2 ----- bp    (bi === 1)
-//     bp ----- m1 ----> m2 ----- ap    (bi === 0)
-// When we call tripleSplit()
-//     ap ----- m1 ----> m2 ----- bp    (abstracted)
-
-function splitLine(ap, bp, fraction, line1, line2, space1, space2, sphereType) {
-    // Assumes direction     ap --- m --> bp
-    var meshes = new THREE.Group();
-    var mp = (new THREE.Vector3()).lerpVectors(ap,bp,fraction);
-
-    meshes.add(endSphere(mp.x, mp.y, mp.z, sphereType));
-    meshes.add(makeSpace(ap.x, ap.y, ap.z, mp.x, mp.y, mp.z, space1));
-
-    meshes.add(makeLine(mp.x, mp.y, mp.z, bp.x, bp.y, bp.z, line2));
-    meshes.add(makeSpace(mp.x, mp.y, mp.z, bp.x, bp.y, bp.z, space2));
-    return meshes;
-}
-
-// needed when the source and destination are on the same edge
-function tripleSplit(ap, bp, f1, f2, line1, line2, space1, space2) {
-    // Assumes going in direction A --> B
-    var meshes = new THREE.Group();
-    if (f1 > f2) {
-        f1 = 1 - f1;
-        f2 = 1 - f2;
-    }
-    var m1 = (new THREE.Vector3()).lerpVectors(ap,bp,f1);
-    var m2 = (new THREE.Vector3()).lerpVectors(ap,bp,f2);
-
-    meshes.add(makeSpace(ap.x, ap.y, ap.z, m1.x, m1.y, m1.z, space1));
-    meshes.add(endSphere(m1.x, m1.y, m1.z, srcSphere));
-
-    meshes.add(makeLine(m1.x, m1.y, m1.z, m2.x, m2.y, m2.z, line2));
-    meshes.add(makeSpace(m1.x, m1.y, m1.z, m2.x, m2.y, m2.z, space2));
-
-    meshes.add(endSphere(m2.x, m2.y, m2.z, dstSphere));
-    meshes.add(makeSpace(m2.x, m2.y, m2.z, bp.x, bp.y, bp.z, space1));
-
-    return meshes;
-}
-
-function endSphereLerp(ap, bp, fraction, m) {
-    var mp = (new THREE.Vector3()).lerpVectors(ap,bp,fraction);
-
-    var geometry = new THREE.SphereGeometry(1);
-    var sphere = new THREE.Mesh(geometry, m);
-    sphere.position.copy(convertVec(mp));
-    return sphere;
-}
-
-function endSphere(x, y, z, m) {
-    var geometry = new THREE.SphereGeometry(1);
-    var sphere = new THREE.Mesh(geometry, m);
-    sphere.position.copy(convertCoords(x, y, z));
-    return sphere;
-}
-
 var oldPath = {};
 var oldEdges = {};
 function initScene() {
@@ -133,14 +31,6 @@ function initScene() {
         oldEdges[edge_str] = edgeGroup;
         scene.add(edgeGroup);
     }
-}
-
-function edgeOnPath(ai,bi) {
-    return ai >= 0 && bi >= 0 && Math.abs(ai - bi) === 1;
-}
-
-function lineNeedsSplitting(path, ai, bi) {
-    return (path.length === 2) || (ai === 0) || (ai === path.length - 1) || (bi === 0) || (bi === path.length - 1);
 }
 
 function updateScenePath(path, sf, ef) {
@@ -197,123 +87,14 @@ function updateScenePath(path, sf, ef) {
             oldPath[edge_str] = false; // definitely off path now
         }
     }
-    // turn start into lerped start (using sf <- startFrac)
-    // turn end into lerped end (using ef)
-
-    // var start = convertVec(coords[path[0]]);
-    // var next = convertVec(coords[path[1]]);
-
-    // start = (new THREE.Vector3()).lerpVectors(start, next, sf);
-
-    // followPath(start, next, 3000);
-
-    //attempting to chain, path does not do further than one unit
-    // var onemore = convertVec(coords[path[2]]);
-    // followPath(start, next, onemore, 3000);
-
-    // This just shows the very end of the path
-    // for ( var i = 0; i < path.length - 1; i++) {
-    //     console.log(i);
-    //     var start = convertVec(coords[path[i]]);
-    //     var next = convertVec(coords[path[i + 1]]);
-    //     start = (new THREE.Vector3()).lerpVectors(start, next, sf);
-    //     followPath(start, next, 3000);
-    // }
-
     var tween = nextCameraTween(path, 0, sf, ef);
     tween.start();
 }
-
-function nextCameraTween(path, index, sf, ef) {
-    var start = convertVec(coords[path[index]]);
-    var end = convertVec(coords[path[index+1]]);
-    if (index === 0) {start = (new THREE.Vector3()).lerpVectors(start, end, sf);}
-    if (index+1 === path.length - 1) {end = (new THREE.Vector3()).lerpVectors(start, end, 1-ef);}
-    console.log(start.distanceTo(end));
-    var tween = new TWEEN.Tween(start).to(end, start.distanceTo(end)*1400/walkingSpeedRatio);
-    var dir = (new THREE.Vector3()).subVectors(end, start).normalize();
-    tween.onUpdate(function(){
-        controls.target = start;
-    });
-    if (index === path.length - 2) {
-        return tween;
-    } else {
-        return tween.chain(nextCameraTween(path,index+1, sf, ef));
-    }
-}
-
-
-// full chain of tweens
-// function followPath(path, sf, time) {
-//     var startVec = convertVec(coords[path[0]]);
-//     var nextVec = convertVec(coords[path[1]]);
-
-//     startVec = (new THREE.Vector3()).lerpVectors(startVec, nextVec, sf);
-
-//     var dir = (new THREE.Vector3()).subVectors(nextVec, startVec).normalize();
-//     camera.position.copy(startVec);
-//     controls.target = (new THREE.Vector3()).addVectors(nextVec, dir); // look a little bit past the next vertex
-
-//     var tween = new TWEEN.Tween(startVec).to(nextVec, time);
-
-//     var tweenLinker = tween;
-//     for ( var i = 1; i < path.length - 1; i++) {
-//         var vec1 = convertVec(coords[path[i]]);
-//         var vec2 = convertVec(coords[path[i+1]]);
-//         vec1 = (new THREE.Vector3()).lerpVectors(startVec, nextVec, 1);
-
-//         current = new TWEEN.Tween(vec1).to(vec2, time);
-//         current.onUpdate(function(){camera.position.copy(vec1);});
-
-//         tweenLinker.chain(current);
-//         tweenLinker = current;
-//     }
-
-    // tween.onUpdate(function(){
-    //     camera.position.copy(startVec);
-    // });
-//     tween.start();
-// }
-
-
-
-// attempting to chain
-// var tween;
-// function followPath(startVec, midVec, endVec, time) {
-//     var dir = (new THREE.Vector3()).subVectors(endVec, startVec).normalize();
-//     camera.position.copy(startVec);
-//     controls.target = (new THREE.Vector3()).addVectors(endVec, dir); // look a little bit past the next vertex
-
-//     tween = new TWEEN.Tween(startVec).to(midVec, time);
-//     tween_next = new TWEEN.Tween(midVec).to(endVec, time);
-//     tween.chain(tween_next);
-
-//     tween.onUpdate(function(){
-//         camera.position.copy(startVec);
-
-//     });
-//     tween.start();
-// }
-
-// var tween;
-// function followPath(startVec, endVec, time) {
-//     console.log("What the what");
-//     var dir = (new THREE.Vector3()).subVectors(endVec, startVec).normalize();
-//     camera.position.copy(startVec);
-//     controls.target = (new THREE.Vector3()).addVectors(endVec, dir); // look a little bit past the next vertex
-//     var tween = new TWEEN.Tween(startVec).to(endVec, time);
-//     tween.onUpdate(function(){
-//         camera.position.copy(startVec);
-
-//     });
-//     tween.start();
-// }
 
 // Animate function
 // Note: I structured it as a factory so that
 // it can be called inside init() so we can avoid
 // too many global variables
-
 function animateFactory(renderer, controls, stats, camera) {
     var animate = function () {
         stats.begin();
@@ -330,11 +111,10 @@ function animateFactory(renderer, controls, stats, camera) {
 // The SCENE needs to be global since external functions modify it.
 // The CAMERA and CONTROLS need to be global since we need to follow the path in GENSCENE().
 // Everything else can live inside init() to avoid cluttering the global namespace.
-var walkingSpeedRatio = 15;
+var WALKING_SPEED_RATIO = 30; // how many times faster than walking speed are you?
 var scene = null;
 var camera = null;
 var controls = null;
-var renderer = null;
 function init() {
     var container = document.getElementById('vis');
     var width = container.clientWidth;
@@ -344,7 +124,7 @@ function init() {
     camera.position.set(-300, 180, 180);
     camera.lookAt(new THREE.Vector3(0, 0, 0));
     // Instantiate RENDERER object
-    renderer = new THREE.WebGLRenderer();
+    var renderer = new THREE.WebGLRenderer();
     renderer.setSize(width, height);
     container.appendChild(renderer.domElement);
     // STATS (fps, memory, etc.)

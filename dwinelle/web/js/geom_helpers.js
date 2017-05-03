@@ -99,3 +99,115 @@ function makeSpaceAsVector(ax, ay, az, bx, by, bz, spaceFn) {
   space.lookAt(lookAt);
   return space;
 }
+
+// ----------- Made for dwinelle_vis.js --------
+
+function convertVec(vec) {
+    return convertCoords(vec.x, vec.y, vec.z);
+}
+
+function convertCoords(x, y, z) {
+    // The data was recorded with z representing UP
+    // 3d rendering uses y as the up direction by convention
+    var SHRINK = 610;
+    var X_OFFSET = 0;
+    var Y_OFFSET = -100;
+    var Z_SHRINK = 1000;
+    var Z_OFFSET = -35;
+    return new THREE.Vector3(x / SHRINK + X_OFFSET,
+        z / Z_SHRINK + Z_OFFSET,
+        -(y / SHRINK + Y_OFFSET));
+}
+
+function makeSpace(ax, ay, az, bx, by, bz, spaceFn) {
+    var a = convertCoords(ax, ay, az);
+    var b = convertCoords(bx, by, bz);
+    return makeSpaceAsVector(a.x, a.y, a.z, b.x, b.y, b.z, spaceFn);
+}
+
+function makeLine(ax, ay, az, bx, by, bz, m) {
+    var geometry = new THREE.Geometry();
+    geometry.vertices.push(convertCoords(ax, ay, az));
+    geometry.vertices.push(convertCoords(bx, by, bz));
+    return new THREE.Line(geometry, m);
+}
+
+// Since edges can occur mid-way along an edge,
+// lerping is necessary!
+// Current edge is start of path
+//          1-sf      sf
+//     ap ------- mp ------> bp    (ai === 0)
+//     bp ------- mp ------> ap    (bi === 0)
+// Current edge is end of path
+//          ef        1-ef
+//     bp ------- mp ------> ap    (ai === path.length - 1)
+//     ap ------- mp ------> bp    (bi === path.length - 1)
+// When we call splitLine()
+//     ap ------- mp ------> bp    (abstracted)
+
+// Current edge is start and end of path
+//         sf                 ef
+//     ap ----- m1 ----> m2 ----- bp    (bi === 1)
+//     bp ----- m1 ----> m2 ----- ap    (bi === 0)
+// When we call tripleSplit()
+//     ap ----- m1 ----> m2 ----- bp    (abstracted)
+
+function splitLine(ap, bp, fraction, line1, line2, space1, space2, sphereType) {
+    // Assumes direction     ap --- m --> bp
+    var meshes = new THREE.Group();
+    var mp = (new THREE.Vector3()).lerpVectors(ap,bp,fraction);
+
+    meshes.add(endSphere(mp.x, mp.y, mp.z, sphereType));
+    meshes.add(makeSpace(ap.x, ap.y, ap.z, mp.x, mp.y, mp.z, space1));
+
+    meshes.add(makeLine(mp.x, mp.y, mp.z, bp.x, bp.y, bp.z, line2));
+    meshes.add(makeSpace(mp.x, mp.y, mp.z, bp.x, bp.y, bp.z, space2));
+    return meshes;
+}
+
+// needed when the source and destination are on the same edge
+function tripleSplit(ap, bp, f1, f2, line1, line2, space1, space2) {
+    // Assumes going in direction A --> B
+    var meshes = new THREE.Group();
+    if (f1 > f2) {
+        f1 = 1 - f1;
+        f2 = 1 - f2;
+    }
+    var m1 = (new THREE.Vector3()).lerpVectors(ap,bp,f1);
+    var m2 = (new THREE.Vector3()).lerpVectors(ap,bp,f2);
+
+    meshes.add(makeSpace(ap.x, ap.y, ap.z, m1.x, m1.y, m1.z, space1));
+    meshes.add(endSphere(m1.x, m1.y, m1.z, srcSphere));
+
+    meshes.add(makeLine(m1.x, m1.y, m1.z, m2.x, m2.y, m2.z, line2));
+    meshes.add(makeSpace(m1.x, m1.y, m1.z, m2.x, m2.y, m2.z, space2));
+
+    meshes.add(endSphere(m2.x, m2.y, m2.z, dstSphere));
+    meshes.add(makeSpace(m2.x, m2.y, m2.z, bp.x, bp.y, bp.z, space1));
+
+    return meshes;
+}
+
+function endSphereLerp(ap, bp, fraction, m) {
+    var mp = (new THREE.Vector3()).lerpVectors(ap,bp,fraction);
+
+    var geometry = new THREE.SphereGeometry(0.5);
+    var sphere = new THREE.Mesh(geometry, m);
+    sphere.position.copy(convertVec(mp));
+    return sphere;
+}
+
+function endSphere(x, y, z, m) {
+    var geometry = new THREE.SphereGeometry(1);
+    var sphere = new THREE.Mesh(geometry, m);
+    sphere.position.copy(convertCoords(x, y, z));
+    return sphere;
+}
+
+function edgeOnPath(ai,bi) {
+    return ai >= 0 && bi >= 0 && Math.abs(ai - bi) === 1;
+}
+
+function lineNeedsSplitting(path, ai, bi) {
+    return (path.length === 2) || (ai === 0) || (ai === path.length - 1) || (bi === 0) || (bi === path.length - 1);
+}
