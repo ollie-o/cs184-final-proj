@@ -1,0 +1,7 @@
+
+
+So the whole problem with the original Dwinelle Navigator is that it is just points in 3d space. So a hallway is just a vector between 2 nodes.
+
+Our challenge was to turn each of those vectors into a reasonably realistic hallway. So for example, the floor needs to be on the bottom and looking up, and obviously it has to be parallel to the vector so that they follow the same path.
+
+We ended up working it out using some 3d trig, and with ideas we learned in the course such as how the dot product of two vectors is the same as its cosine. So we ended up with the hallways we wanted. But... Not without some blunders along the way.
