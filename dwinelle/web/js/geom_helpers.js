@@ -125,11 +125,19 @@ function makeSpace(ax, ay, az, bx, by, bz, spaceFn) {
     return makeSpaceAsVector(a.x, a.y, a.z, b.x, b.y, b.z, spaceFn);
 }
 
+function makePath(ap, bp, m) {
+  if (FIRST_PERSON) {
+    return makeLine(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z, m);
+  } else {
+    return makeCylinder(ap, bp, m);
+  }
+}
+
 function makeLine(ax, ay, az, bx, by, bz, m) {
-    var geometry = new THREE.Geometry();
-    geometry.vertices.push(convertCoords(ax, ay, az));
-    geometry.vertices.push(convertCoords(bx, by, bz));
-    return new THREE.Line(geometry, m);
+  var geometry = new THREE.Geometry();
+  geometry.vertices.push(convertCoords(ax, ay, az));
+  geometry.vertices.push(convertCoords(bx, by, bz));
+  return new THREE.Line(geometry, m);
 }
 
 function makeCylinder(pointX, pointY, material) {
@@ -181,7 +189,7 @@ function splitLine(ap, bp, fraction, line1, line2, space1, space2, sphereType) {
     meshes.add(endSphere(mp.x, mp.y, mp.z, sphereType));
     meshes.add(makeSpace(ap.x, ap.y, ap.z, mp.x, mp.y, mp.z, space1));
 
-    meshes.add(makeCylinder(mp, bp, line2));
+    meshes.add(makePath(mp, bp, line2));
     // meshes.add(makeLine(mp.x, mp.y, mp.z, bp.x, bp.y, bp.z, line2));
     meshes.add(makeSpace(mp.x, mp.y, mp.z, bp.x, bp.y, bp.z, space2));
     return meshes;
@@ -201,7 +209,7 @@ function tripleSplit(ap, bp, f1, f2, line1, line2, space1, space2) {
     meshes.add(makeSpace(ap.x, ap.y, ap.z, m1.x, m1.y, m1.z, space1));
     meshes.add(endSphere(m1.x, m1.y, m1.z, srcSphere));
 
-    meshes.add(makeCylinder(m1, m2, line2));
+    meshes.add(makePath(m1, m2, line2));
     // meshes.add(makeLine(m1.x, m1.y, m1.z, m2.x, m2.y, m2.z, line2));
     meshes.add(makeSpace(m1.x, m1.y, m1.z, m2.x, m2.y, m2.z, space2));
 

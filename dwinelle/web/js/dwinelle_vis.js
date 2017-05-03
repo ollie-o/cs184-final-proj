@@ -33,7 +33,13 @@ function initScene() {
     }
 }
 
+var currentPath = [];
+var currentSf = 1;
+var currentEf = 1;
 function updateScenePath(path, sf, ef) {
+    currentPath = path;
+    currentSf = sf;
+    currentEf = ef;
     // Returns a scene containing the full path
     for (var edge_str in el) {
         var s = edge_str.split(' ');
@@ -53,31 +59,28 @@ function updateScenePath(path, sf, ef) {
         var prevEdgeGroup = oldEdges[edge_str];
 
         if (edgeOnPath(ai,bi) ) {
-            if ( lineNeedsSplitting(path, ai, bi) || !oldPath[edge_str] ) {
-                scene.remove(prevEdgeGroup);
-                // Splitting cases
-                if (path.length === 2) {
-                    if (bi === 1) {
-                        edgeGroup = tripleSplit(ap, bp, sf, ef, faded, hilight, spaceFn, pathSpaceFn);
-                    } else {
-                        edgeGroup = tripleSplit(bp, ap, sf, ef, faded, hilight, spaceFn, pathSpaceFn);
-                    }
-                } else if (ai === 0) {
-                    edgeGroup = splitLine(ap, bp, sf, faded, hilight, spaceFn, pathSpaceFn, srcSphere);
-                } else if (ai === path.length - 1) {
-                    edgeGroup = splitLine(ap, bp, ef, faded, hilight, spaceFn, pathSpaceFn, dstSphere);
-                } else if (bi === 0) {
-                    edgeGroup = splitLine(bp, ap, sf, faded, hilight, spaceFn, pathSpaceFn, srcSphere);
-                } else if (bi === path.length - 1) {
-                    edgeGroup = splitLine(bp, ap, ef, faded, hilight, spaceFn, pathSpaceFn, dstSphere);
-                } else if (!oldPath[edge_str]) { // Non-splitting case
-                    edgeGroup.add(makeSpace(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z, pathSpaceFn));
-                    // edgeGroup.add(makeLine(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z, hilight));
-                    edgeGroup.add(makeCylinder(ap, bp, hilight));
+            scene.remove(prevEdgeGroup);
+            // Splitting cases
+            if (path.length === 2) {
+                if (bi === 1) {
+                    edgeGroup = tripleSplit(ap, bp, sf, ef, faded, hilight, spaceFn, pathSpaceFn);
+                } else {
+                    edgeGroup = tripleSplit(bp, ap, sf, ef, faded, hilight, spaceFn, pathSpaceFn);
                 }
-                oldEdges[edge_str] = edgeGroup;
-                scene.add(edgeGroup);
+            } else if (ai === 0) {
+                edgeGroup = splitLine(ap, bp, sf, faded, hilight, spaceFn, pathSpaceFn, srcSphere);
+            } else if (ai === path.length - 1) {
+                edgeGroup = splitLine(ap, bp, ef, faded, hilight, spaceFn, pathSpaceFn, dstSphere);
+            } else if (bi === 0) {
+                edgeGroup = splitLine(bp, ap, sf, faded, hilight, spaceFn, pathSpaceFn, srcSphere);
+            } else if (bi === path.length - 1) {
+                edgeGroup = splitLine(bp, ap, ef, faded, hilight, spaceFn, pathSpaceFn, dstSphere);
+            } else { // Non-splitting case
+                edgeGroup.add(makeSpace(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z, pathSpaceFn));
+                edgeGroup.add(makePath(ap, bp, hilight));
             }
+            oldEdges[edge_str] = edgeGroup;
+            scene.add(edgeGroup);
             oldPath[edge_str] = true; // definitely on path now
         } else {
             if (oldPath[edge_str]) { // destroy and re-add iff was on path and now is not
@@ -88,8 +91,6 @@ function updateScenePath(path, sf, ef) {
             oldPath[edge_str] = false; // definitely off path now
         }
     }
-    var tween = nextCameraTween(path, 0, sf, ef);
-    tween.start();
 }
 
 // Animate function
@@ -103,6 +104,7 @@ function animateFactory(renderer, controls, stats, camera) {
         renderer.render(scene, camera);
         TWEEN.update();
         stats.end();
+        console.log(camera.position);
         requestAnimationFrame(animate);
     };
     return animate;
@@ -121,7 +123,7 @@ function init() {
     var height = container.clientHeight;
     // Instantiate CAMERA object
     camera = new THREE.PerspectiveCamera(55, width / height, 0.5, 5000);
-    camera.position.set(-300, 180, 180);
+    camera.position.set(-168, 25, -17);
     camera.lookAt(new THREE.Vector3(0, 0, 0));
     // Instantiate RENDERER object
     var renderer = new THREE.WebGLRenderer();

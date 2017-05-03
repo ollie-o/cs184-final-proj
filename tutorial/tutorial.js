@@ -58,7 +58,7 @@ function init() {
   // scene.add(makeSpaceAsVector(0, 0, 0, 0, 0, -20, hallwayType1_realistic));
   // scene.add(makeSpaceAsVector(-12, 0, -9, 12, 7, -2, hallwayType1_realistic));
   scene.add(makeSpaceAsVector(-75, 25, -130, -54, 25, -130, hallwayType1_realistic));
-  scene.add(makeSpaceAsVector(-75, 25, -130, -75, -17, -100, hallwayType1_realistic));
+  scene.add(makeSpaceAsVector(-75, 25, -130, -75, 10, -100, hallwayType1_realistic));
 
   camera.position.set(-75, 35, -130);
   controls.target = new THREE.Vector3(-75, 25, -130);
