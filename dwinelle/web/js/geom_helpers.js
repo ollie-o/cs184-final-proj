@@ -246,12 +246,11 @@ function lineNeedsSplitting(path, ai, bi) {
 // Env Sphere!
 
 function makeEnvSphere(fname) {
-  var sphere = new THREE.Mesh(
-    new THREE.SphereGeometry(1000, 20, 20),
-    new THREE.MeshBasicMaterial({
-      map: THREE.ImageUtils.loadTexture('./js/dwinelle_env.jpg')
-    })
-  );
+  var tex = new THREE.MeshBasicMaterial({
+    map: THREE.ImageUtils.loadTexture(fname)
+  });
+  tex.minFilter = THREE.LinearFilter;
+  var sphere = new THREE.Mesh(new THREE.SphereGeometry(1000, 20, 20),tex);
   sphere.scale.x = -1;
   return sphere;
 }

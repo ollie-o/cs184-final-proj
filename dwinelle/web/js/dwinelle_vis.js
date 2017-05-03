@@ -137,14 +137,6 @@ function init() {
     controls.autoRotate = true;
     // Generate the Geometry of Dwinelle
     scene = new THREE.Scene();
-    var sphere = new THREE.Mesh(
-    new THREE.SphereGeometry(1000, 20, 20),
-    new THREE.MeshBasicMaterial({
-    map: THREE.ImageUtils.loadTexture('http://localhost:5000/pages/cs184-final/final-page/photosphere-gh-pages/unnamed.jpg')
-    })
-    );
-    sphere.scale.x = -1;
-    scene.add(sphere);
     initScene();
     // scene.add(makeArrowHelper(0, 0, 0, 0, 0, 1, 2, 0x325EFF));
     // scene.add(makeArrowHelper(0, 0, 0, 0, 1, 0, 2, 0x7F4B05));
