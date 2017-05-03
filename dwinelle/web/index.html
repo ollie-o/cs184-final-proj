@@ -33,18 +33,19 @@
 				<h1>Dwinelle Navigator</h1>
 				<div id="controls">
 					<div id="dropdowns">
-						<select id="src" placeholder="Enter starting point"></select>
-						<select id="dst" placeholder="Enter destination"></select>
+						<select id="src" placeholder="Enter starting point" onchange="onChoiceChange()"></select>
+						<select id="dst" placeholder="Enter destination" onchange="onChoiceChange()"></select>
 					</div>
 					<div id="swapdiv">
 						<!-- Google Material Icon "swap vert" -->
-						<svg id="swapsvg" title="Swap source and destination" class="icon button" fill="#000000" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+						<svg id="swapsvg" onclick="swapButton()" title="Swap source and destination" class="icon button" fill="#000000" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
 							<path d="M16 17.01V10h-2v7.01h-3L15 21l4-3.99h-3zM9 3L5 6.99h3V14h2V6.99h3L9 3z"></path>
 							<path d="M0 0h24v24H0z" fill="none"></path>
 						</svg>
 					</div>
 				</div>
-				<button id="clearbutton">Clear</button>
+				<button id="clearbutton" onclick="clearButton()">Clear</button>
+				<button id="togglecamera" onclick="toggleCamera()">Toggle Camera</button>
 
 				<div id="directions">
 					Estimated walking time: <span id="eta"></span> seconds

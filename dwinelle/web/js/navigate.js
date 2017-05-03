@@ -575,9 +575,6 @@ window.onload = function() {
         choices: ROOMCHOICHES.concat(DSTDEFAULT).concat(MULTICHOICES),
         sortFilter: sortChoices});
 
-    srcElem.addEventListener('change', onChoiceChange);
-    dstElem.addEventListener('change', onChoiceChange);
-
     var hash = window.location.hash.substr(1);
     if (hash) {
         var chosenSrc = decodeURIComponent(hash.match(/(?:^|\&)src\=([^\&]+)/)[1]);
@@ -592,28 +589,26 @@ window.onload = function() {
 
         onChoiceChange();
     }
-
-    // swap button
-    document.getElementById('swapsvg').onclick = function() {
-        var src = srcChoice.getValue(true);
-        var dst = dstChoice.getValue(true);
-        console.log(src, dst);
-
-        if (dstChoice.presetChoices.some(findChoice(src))
-                && srcChoice.presetChoices.some(findChoice(dst))) {
-            srcChoice.setValueByChoice(dst);
-            dstChoice.setValueByChoice(src);
-            onChoiceChange();
-        }
-    };
-
-    // clear button
-    document.getElementById('clearbutton').onclick = function() {
-        srcChoice.setValueByChoice('');
-        dstChoice.setValueByChoice('');
-        onChoiceChange();
-    };
 };
+
+function swapButton() {
+    var src = srcChoice.getValue(true);
+    var dst = dstChoice.getValue(true);
+    console.log(src, dst);
+
+    if (dstChoice.presetChoices.some(findChoice(src)) &&
+        srcChoice.presetChoices.some(findChoice(dst))) {
+        srcChoice.setValueByChoice(dst);
+        dstChoice.setValueByChoice(src);
+        onChoiceChange();
+    }
+}
+
+function clearButton() {
+    srcChoice.setValueByChoice('');
+    dstChoice.setValueByChoice('');
+    onChoiceChange();
+}
 
 function putDirections(dirList, eta) {
     var span_eta = document.getElementById('eta');
