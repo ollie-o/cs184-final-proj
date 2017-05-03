@@ -1,11 +1,11 @@
 function hallwayType1_simple(length) {
   var space = new THREE.Group();
   // Floor
-  space.add(makePlane(5  , length, 0   , 0   , 0 , null, null     , null, plainLightGray));
+  space.add(makePlane(5  , length, 0   , 0   , 0 , null, null     , null, simpleFloor));
   // Left Wall
-  space.add(makePlane(2.5, Math.max(length-5,0), 2.5 , 0, 1.25, null, Math.PI/2 , null, plainDarkGray));
+  space.add(makePlane(2.5, Math.max(length-5,0), 2.5 , 0, 1.25, null, Math.PI/2 , null, simplePaint));
   // Right Wall
-  space.add(makePlane(2.5, Math.max(length-5,0), -2.5, 0, 1.25, null, -Math.PI/2, null, plainDarkGray));
+  space.add(makePlane(2.5, Math.max(length-5,0), -2.5, 0, 1.25, null, -Math.PI/2, null, simplePaint));
   return space;
 }
 

@@ -7,8 +7,10 @@ var dstSphere = new THREE.MeshBasicMaterial({ color: 0x7e1515 });
 // New Materials
 
 var paintMat = new THREE.MeshLambertMaterial( {color: 0xA8A280, side: THREE.BackSide} );
+paintMat.polygonOffset = true;
+paintMat.polygonOffsetFactor = -0.1;
 
-var floorMat = new THREE.MeshPhongMaterial( {color: 0x42331F, side: THREE.DoubleSide} );
+var floorMat = new THREE.MeshPhongMaterial( {color: 0x42331F, side: THREE.FrontSide} );
 floorMat.shininess = 110;
 floorMat.polygonOffset = true;
 floorMat.polygonOffsetFactor = -0.1;
@@ -16,3 +18,6 @@ floorMat.polygonOffsetFactor = -0.1;
 var plainWhite = new THREE.MeshBasicMaterial({color: 0xFFFFFF, side: THREE.DoubleSide});
 var plainLightGray = new THREE.MeshBasicMaterial({color: 0xF1F1F1, side: THREE.DoubleSide});
 var plainDarkGray = new THREE.MeshBasicMaterial({color: 0xA9A9A9, side: THREE.DoubleSide});
+
+var simplePaint = new THREE.MeshBasicMaterial({color: 0x66624f, side: THREE.DoubleSide});
+var simpleFloor = new THREE.MeshBasicMaterial({color: 0x38352b, side: THREE.DoubleSide});
