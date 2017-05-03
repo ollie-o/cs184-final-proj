@@ -72,7 +72,8 @@ function updateScenePath(path, sf, ef) {
                     edgeGroup = splitLine(bp, ap, ef, faded, hilight, spaceFn, pathSpaceFn, dstSphere);
                 } else if (!oldPath[edge_str]) { // Non-splitting case
                     edgeGroup.add(makeSpace(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z, pathSpaceFn));
-                    edgeGroup.add(makeLine(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z, hilight));
+                    // edgeGroup.add(makeLine(ap.x, ap.y, ap.z, bp.x, bp.y, bp.z, hilight));
+                    edgeGroup.add(makeCylinder(ap, bp, hilight));
                 }
                 oldEdges[edge_str] = edgeGroup;
                 scene.add(edgeGroup);
@@ -111,7 +112,6 @@ function animateFactory(renderer, controls, stats, camera) {
 // The SCENE needs to be global since external functions modify it.
 // The CAMERA and CONTROLS need to be global since we need to follow the path in GENSCENE().
 // Everything else can live inside init() to avoid cluttering the global namespace.
-var WALKING_SPEED_RATIO = 30; // how many times faster than walking speed are you?
 var scene = null;
 var camera = null;
 var controls = null;
@@ -133,14 +133,12 @@ function init() {
     document.body.appendChild( stats.dom );
     // ORBIT CONTROLS
     controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.autoRotate = false;
-    controls.maxDistance = 1;
     // Generate the Geometry of Dwinelle
     scene = new THREE.Scene();
     initScene();
-    scene.add(makeArrowHelper(0, 0, 0, 0, 0, 1, 2, 0x325EFF));
-    scene.add(makeArrowHelper(0, 0, 0, 0, 1, 0, 2, 0x7F4B05));
-    scene.add(makeArrowHelper(0, 0, 0, 1, 0, 0, 2, 0x000000));
+    // scene.add(makeArrowHelper(0, 0, 0, 0, 0, 1, 2, 0x325EFF));
+    // scene.add(makeArrowHelper(0, 0, 0, 0, 1, 0, 2, 0x7F4B05));
+    // scene.add(makeArrowHelper(0, 0, 0, 1, 0, 0, 2, 0x000000));
     // Adjust Size on Window Resize
     var onWindowResize = function() {
         var w = container.clientWidth;

@@ -132,6 +132,27 @@ function makeLine(ax, ay, az, bx, by, bz, m) {
     return new THREE.Line(geometry, m);
 }
 
+function makeCylinder(pointX, pointY, material) {
+  // http://stackoverflow.com/questions/15316127/three-js-line-vector-to-cylinder
+  var pointX = convertVec(pointX);
+  var pointY = convertVec(pointY);
+  var direction = new THREE.Vector3().subVectors(pointY, pointX);
+  var orientation = new THREE.Matrix4();
+  orientation.lookAt(pointX, pointY, new THREE.Object3D().up);
+  orientation.multiply(new THREE.Matrix4().set(1, 0, 0, 0,
+      0, 0, 1, 0,
+      0, -1, 0, 0,
+      0, 0, 0, 1));
+  var edgeGeometry = new THREE.CylinderGeometry(0.2, 0.2, direction.length(), 8, 1);
+  var edge = new THREE.Mesh(edgeGeometry, material);
+  edge.applyMatrix(orientation);
+  // position based on midpoints - there may be a better solution than this
+  edge.position.x = (pointY.x + pointX.x) / 2;
+  edge.position.y = (pointY.y + pointX.y) / 2;
+  edge.position.z = (pointY.z + pointX.z) / 2;
+  return edge;
+}
+
 // Since edges can occur mid-way along an edge,
 // lerping is necessary!
 // Current edge is start of path
@@ -160,7 +181,8 @@ function splitLine(ap, bp, fraction, line1, line2, space1, space2, sphereType) {
     meshes.add(endSphere(mp.x, mp.y, mp.z, sphereType));
     meshes.add(makeSpace(ap.x, ap.y, ap.z, mp.x, mp.y, mp.z, space1));
 
-    meshes.add(makeLine(mp.x, mp.y, mp.z, bp.x, bp.y, bp.z, line2));
+    meshes.add(makeCylinder(mp, bp, line2));
+    // meshes.add(makeLine(mp.x, mp.y, mp.z, bp.x, bp.y, bp.z, line2));
     meshes.add(makeSpace(mp.x, mp.y, mp.z, bp.x, bp.y, bp.z, space2));
     return meshes;
 }
@@ -179,7 +201,8 @@ function tripleSplit(ap, bp, f1, f2, line1, line2, space1, space2) {
     meshes.add(makeSpace(ap.x, ap.y, ap.z, m1.x, m1.y, m1.z, space1));
     meshes.add(endSphere(m1.x, m1.y, m1.z, srcSphere));
 
-    meshes.add(makeLine(m1.x, m1.y, m1.z, m2.x, m2.y, m2.z, line2));
+    meshes.add(makeCylinder(m1, m2, line2));
+    // meshes.add(makeLine(m1.x, m1.y, m1.z, m2.x, m2.y, m2.z, line2));
     meshes.add(makeSpace(m1.x, m1.y, m1.z, m2.x, m2.y, m2.z, space2));
 
     meshes.add(endSphere(m2.x, m2.y, m2.z, dstSphere));
