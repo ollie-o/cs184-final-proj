@@ -13,6 +13,9 @@
 		<script src="./lib/tween.js"></script>
 		<script src="./lib/OrbitControls.js"></script>
 		<script src="./lib/stats.min.js"></script>
+		<script src="./lib/jquery.min.js"></script>
+		<script src="./lib/materialize/js/materialize.min.js"></script>
+		<link rel="stylesheet" href="./lib/materialize/css/materialize.min.css">
 		<!-- General CSS -->
 		<link rel="stylesheet" href="site.css">
 		<!-- JavaScript to Map the Paths -->
@@ -25,38 +28,45 @@
 		<script src="./js/textures.js"></script>
 		<script src="./js/geom_helpers.js"></script>
 		<script src="./js/camera_helpers.js"></script>
+		<script src="./js/pageEventFns.js"></script>
 	</head>
 	<body>
-		<div id="container">
-
+		<div class="z-depth-2 toggle_button">
+			<a class="blue waves-effect waves-light btn buttons" onclick="toggleControls()">Toggle Menu</a>
+			<a class="green lighten-2 waves-effect waves-light btn buttons pulse" id="togglecameratopright" onclick="toggleCamera()" style="display:none">3rd/1st Person</a>
+		</div>
+		<div class="z-depth-4" id="container">
 			<div id="interface">
-				<h1>Dwinelle Navigator</h1>
+				<h3>Dwinelle Navigator</h3>
 				<div id="controls">
 					<div id="dropdowns">
 						<select id="src" placeholder="Enter starting point" onchange="onChoiceChange()"></select>
 						<select id="dst" placeholder="Enter destination" onchange="onChoiceChange()"></select>
 					</div>
-					<div id="swapdiv">
-						<!-- Google Material Icon "swap vert" -->
-						<svg id="swapsvg" onclick="swapButton()" title="Swap source and destination" class="icon button" fill="#000000" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
-							<path d="M16 17.01V10h-2v7.01h-3L15 21l4-3.99h-3zM9 3L5 6.99h3V14h2V6.99h3L9 3z"></path>
-							<path d="M0 0h24v24H0z" fill="none"></path>
-						</svg>
-					</div>
+					<a class="blue waves-effect waves-light btn" style="width:35px; height:35px; padding:0">
+						<div id="swapdiv">
+							<!-- Google Material Icon "swap vert" -->
+							<svg id="swapsvg" onclick="swapButton()" title="Swap source and destination" class="icon button" fill="#FFFFFF" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+								<path d="M16 17.01V10h-2v7.01h-3L15 21l4-3.99h-3zM9 3L5 6.99h3V14h2V6.99h3L9 3z"></path>
+								<path d="M0 0h24v24H0z" fill="none"></path>
+							</svg>
+						</div>
+					</a>
 				</div>
-				<button id="clearbutton" onclick="clearButton()">Clear</button>
-				<button id="togglecamera" onclick="toggleCamera()">Toggle Camera</button>
-				<button id="startanimation" onclick="startPathAnimation()">Animate Path</button>
+				<a class="center-buttons waves-effect waves-light btn buttons" id="clearbutton" onclick="clearButton()">Clear Path</a>
+				<a class="green lighten-2 center-buttons waves-effect waves-light btn buttons" id="togglecamera" onclick="toggleCamera()">3rd/1st Person</a>
+				<a class="red center-buttons waves-effect waves-light btn buttons" id="startanimation" onclick="goButton()">Animate Path!</a>
+				<div class="red-text" id="noPathError" style="display:none; padding: 2px">Error: Can't animate if there is no path chosen.</div>
+				<p>Walking Speed: <span id="animspeed">30</span></p>
+				<p class="range-field"><input type="range" id="walkingspeed" defaultValue="30" onchange="updateWalkingSpeed()" min="1" max="60"></p>
 
 				<div id="directions">
 					Estimated walking time: <span id="eta"></span> seconds
 					<ol id="directions-ol"></ol>
 				</div>
 			</div>
-
-			<div id="vis"></div>
-			<script src="./js/dwinelle_vis.js"></script>
-
 		</div>
+		<div id="vis"></div>
+		<script src="./js/dwinelle_vis.js"></script>
 	</body>
 </html>

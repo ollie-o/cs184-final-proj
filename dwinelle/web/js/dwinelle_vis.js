@@ -17,7 +17,7 @@
 var oldPath = {};
 var oldEdges = {};
 function initScene() {
-    scene.background = new THREE.Color(0xffffff);
+    scene.add(makeEnvSphere('./js/dwinelle_env.jpg'));
     for (var edge_str in el) {
         oldPath[edge_str] = false;
         var s = edge_str.split(' ');
@@ -99,12 +99,11 @@ function updateScenePath(path, sf, ef) {
 // too many global variables
 function animateFactory(renderer, controls, stats, camera) {
     var animate = function () {
-        stats.begin();
+        // stats.begin();
         controls.update();
         renderer.render(scene, camera);
         TWEEN.update();
-        stats.end();
-        console.log(camera.position);
+        // stats.end();
         requestAnimationFrame(animate);
     };
     return animate;
@@ -130,13 +129,22 @@ function init() {
     renderer.setSize(width, height);
     container.appendChild(renderer.domElement);
     // STATS (fps, memory, etc.)
-    var stats = new Stats();
-    stats.showPanel( 0 );
-    document.body.appendChild( stats.dom );
+    // var stats = new Stats();
+    // stats.showPanel( 0 );
+    // document.body.appendChild( stats.dom );
     // ORBIT CONTROLS
     controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.autoRotate = true;
     // Generate the Geometry of Dwinelle
     scene = new THREE.Scene();
+    var sphere = new THREE.Mesh(
+    new THREE.SphereGeometry(1000, 20, 20),
+    new THREE.MeshBasicMaterial({
+    map: THREE.ImageUtils.loadTexture('http://localhost:5000/pages/cs184-final/final-page/photosphere-gh-pages/unnamed.jpg')
+    })
+    );
+    sphere.scale.x = -1;
+    scene.add(sphere);
     initScene();
     // scene.add(makeArrowHelper(0, 0, 0, 0, 0, 1, 2, 0x325EFF));
     // scene.add(makeArrowHelper(0, 0, 0, 0, 1, 0, 2, 0x7F4B05));
@@ -151,7 +159,7 @@ function init() {
     };
     window.addEventListener('resize', onWindowResize, false);
     // Start the Animation Loop
-    var animate = animateFactory(renderer, controls, stats, camera);
+    var animate = animateFactory(renderer, controls, undefined, camera);
     animate();
 }
 

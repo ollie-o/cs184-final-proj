@@ -499,38 +499,6 @@ function directionList(nodelist, startRoom, endRoom, endEdge) {
     return directions;
 }
 
-function onChoiceChange() {
-    var src = srcChoice.getValue(true);
-    var dst = dstChoice.getValue(true);
-
-    if (!src || !dst) {
-        updateScenePath([]);
-        history.replaceState("", document.title, window.location.pathname
-            + window.location.search);
-        return;
-    }
-
-    window.location.hash = ('src=' + encodeURIComponent(src)
-        + '&dst=' + encodeURIComponent(dst));
-
-    var foundPath = findPath(src, dst);
-    dlist = directionList(foundPath.path, src, dst, foundPath.endEdge);
-    console.log(directionList(foundPath.path, src, dst, foundPath.endEdge));
-    console.log(foundPath);
-    putDirections(dlist, foundPath.totalDist / 1000);
-
-    var startFrac = foundPath.startEdge.t;
-    if (foundPath.startEdge.a !== foundPath.path[0]) {
-        startFrac = 1 - startFrac;
-    }
-
-    var endFrac = foundPath.endEdge.t;
-    if (foundPath.endEdge.a !== foundPath.path[foundPath.path.length - 1]) {
-        endFrac = 1 - endFrac;
-    }
-    updateScenePath(foundPath.path, startFrac, endFrac);
-}
-
 // sort the choices list to include bathrooms/main entrances first
 function sortChoices(a, b) {
     // makes sure the empty one goes on bottom
@@ -590,25 +558,6 @@ window.onload = function() {
         onChoiceChange();
     }
 };
-
-function swapButton() {
-    var src = srcChoice.getValue(true);
-    var dst = dstChoice.getValue(true);
-    console.log(src, dst);
-
-    if (dstChoice.presetChoices.some(findChoice(src)) &&
-        srcChoice.presetChoices.some(findChoice(dst))) {
-        srcChoice.setValueByChoice(dst);
-        dstChoice.setValueByChoice(src);
-        onChoiceChange();
-    }
-}
-
-function clearButton() {
-    srcChoice.setValueByChoice('');
-    dstChoice.setValueByChoice('');
-    onChoiceChange();
-}
 
 function putDirections(dirList, eta) {
     var span_eta = document.getElementById('eta');

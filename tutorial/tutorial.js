@@ -59,9 +59,17 @@ function init() {
   // scene.add(makeSpaceAsVector(-12, 0, -9, 12, 7, -2, hallwayType1_realistic));
   scene.add(makeSpaceAsVector(-75, 25, -130, -54, 25, -130, hallwayType1_realistic));
   scene.add(makeSpaceAsVector(-75, 25, -130, -75, 10, -100, hallwayType1_realistic));
-
-  camera.position.set(-75, 35, -130);
-  controls.target = new THREE.Vector3(-75, 25, -130);
+  // scene.add(makePhotoSphere());
+  var sphere = new THREE.Mesh(
+  new THREE.SphereGeometry(100, 20, 20),
+  new THREE.MeshBasicMaterial({
+    map: THREE.ImageUtils.loadTexture('http://localhost:5000/pages/cs184-final/final-page/photosphere-gh-pages/unnamed.jpg')
+  })
+  );
+  sphere.scale.x = -1;
+  scene.add(sphere);
+  // camera.position.set(-75, 35, -130);
+  // controls.target = new THREE.Vector3(-75, 25, -130);
   render();
 }
 

@@ -242,3 +242,16 @@ function edgeOnPath(ai,bi) {
 function lineNeedsSplitting(path, ai, bi) {
     return (path.length === 2) || (ai === 0) || (ai === path.length - 1) || (bi === 0) || (bi === path.length - 1);
 }
+
+// Env Sphere!
+
+function makeEnvSphere(fname) {
+  var sphere = new THREE.Mesh(
+    new THREE.SphereGeometry(1000, 20, 20),
+    new THREE.MeshBasicMaterial({
+      map: THREE.ImageUtils.loadTexture('./js/dwinelle_env.jpg')
+    })
+  );
+  sphere.scale.x = -1;
+  return sphere;
+}
