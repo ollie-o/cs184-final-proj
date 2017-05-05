@@ -1,0 +1,218 @@
+<h1>Abstract</h1>
+
+  <p>Dwinelle Hall is a <a href="http://www.dailycal.org/2014/02/10/story-dwinelle-hall/">notoriously labyrinthian</a> building on the UC Berkeley campus. Our project is a browser-based 3D representation of the building, complete with interactive directions between the many entrances, exits, and rooms.</p>
+
+  <p>We obtained the geometry of Dwinelle Hall as well as the pathfinding algorithm from <a href="https://dkess.me/dwinelle/">existing work by Daniel Kessler</a>. <a href="https://dkess.me/">Kessler</a>’s wireframe representation of Dwinelle is a collection of 3D points connected by lines.</p>
+
+  <p>From this representation we:</p>
+  <ul>
+    <li>created hallway objects following vectors between these 3D points,</li>
+    <li>replaced the white backdrop with an environment map of Strawberry Creek,</li>
+    <li>updated the user interface to comply with Material Design and to work better on mobile devices,</li>
+    <li>and implemented 3rd- and 1st-person camera fly-throughs of paths between rooms.</li>
+  </ul>
+
+  <p>For the 3D model, we used <a href="https://github.com/mrdoob/three.js/">Three.js</a>, a library built to improve on <a href="https://www.khronos.org/webgl/wiki/Main_Page">WebGL</a>. In addition, we used the Three.js library <a href="https://github.com/mattdesl/three-orbit-controls">OrbitControls</a> and the interpolation library <a href="http://www.createjs.com/tweenjs">Tween.js</a></p>
+
+  <p>For the user interface improvements, we used <a href="http://materializecss.com/">Materialize</a>, a CSS library.</p>
+
+<hr/>
+
+<h1>Technical approach</h1>
+
+  <h3>Turning a Wireframe Into Realistic Hallways</h3>
+
+    <p>Kessler’s model is comprised of 3D points which are connected by vectors. We could have hard-coded the building's interior, but we instead opted for a procedural approach wherein we would use vectors to guide the direction and location of each hallway.</p>
+
+    <a href="./pages/cs184-final/writeup-files/vectors1.png">
+      <img class="full-width-unless-tall" src="./pages/cs184-final/writeup-files/vectors1.png"></img>
+    </a>
+
+    <p>Creating a hallway that would look realistic following any vector - even one with an unusual direction and not centered at the origin - proved to be very challenging problem. As a baseline, we determined that the floor needs to be on the bottom and looking up, and obviously it has to be parallel to the vector so that they follow the same path.</p>
+
+    <p>We tackled this problem with trial and error, and a lot of pen-and-paper calculations. The first challenge was representing the floor of a hallway.</p>
+
+    <p>Here are some baseline ideas that guided our process:</p>
+    <ul>
+      <li>Meshes, lights, and other objects, such as the <code>PlaneGeometry</code> object are all children of the <code>Object3D</code> object.</li>
+      <li>The <code>Object3D</code> object has a <code>lookAt</code> attribute, which defines the direction in world coordinates that its normal vector points to. Changing the value of an object's <code>lookAt</code> will cause it to rotate in space around its <code>position</code>.</li>
+      <li>In Three.js, planes are positioned based on the location of their center. In the image above, the shorter lines point from the <code>position</code> of their respective planes to the midpoint of their respective vectors. In fact, the shorter lines are just extended versions of the each plane's normal vector.</li>
+    </ul>
+
+    <p>Once we discovered those facts, we realized that we could make a plane "follow" a vector by modifying a its <code>position</code> and <code>lookAt</code> attributes.</p>
+
+    <p>Our strategy was as follows:</p>
+    <ul>
+      <li>Since hallways are on the bottom of a space, looking up, a floor's <code>position</code> should be 1.5 meters directly below the midpoint of the vector.</li>
+      <li>Since we need the floor to be parallel to the vector, the <code>lookAt</code> attribute should be a point along the vector such that a line between <code>lookAt</code> and <code>position</code> creates a right angle with the vector.</li>
+    </ul>
+
+    <p>Those constraints, after hours of failed approaches, led us to a solution. Here is a diagram of that solution.</p>
+
+    <a href="./pages/cs184-final/writeup-files/vectors_diagram.png">
+      <img class="full-width-unless-tall" src="./pages/cs184-final/writeup-files/vectors_diagram.png"></img>
+    </a>
+
+    <p>At this point we thought we had successfully aligned our hallways, but we had left a degree of freedom unconstrained!</p>
+
+    <a href="./pages/cs184-final/writeup-files/vectors2.png">
+      <img class="full-width-unless-tall" src="./pages/cs184-final/writeup-files/vectors2.png"></img>
+    </a>
+
+    <p>Here is what that would have looked like on the wireframe if we had not fixed the problem:</p>
+
+    <a href="./pages/cs184-final/writeup-files/vectors4.png">
+      <img class="full-width-unless-tall" src="./pages/cs184-final/writeup-files/vectors4.png"></img>
+    </a>
+
+    <p>The final step was to specify an appropriate <code>up</code> attribute to the planes. Here is an excellent explanation of the <code>up</code> vector's role <a href="http://stackoverflow.com/questions/20506425/three-js-how-do-up-vectors-work-with-lookat">by user WestLangley on StackOverflow</a>.</p>
+
+    <blockquote>
+      <p>When you call <code>Object.lookAt( vector )</code>, the object is rotated so that its internal z-axis points toward the target vector.</p>
+      <p>But that is not sufficient to specify the object's orientation, because the object itself can still be "spun" on its z-axis.</p>
+      <p>So the object is then "spun" so that its internal y-axis is in the plane of its internal z-axis and the up vector.</p>
+      <p>The target vector and the up vector are, together, sufficient to uniquely specify the object's orientation.</p>
+    </blockquote>
+
+    <p>For this particular case, the solution was to set the <code>up</code> attribute of the plane to point in the same direction as the vector, if the vector had started at the origin of the plane. The approach is a little mind-bending once you account for world vs. object coordinates:</p>
+
+
+<pre><code class="javascript">space.updateMatrixWorld();
+space.up = planeCenter.add(space.worldToLocal(dir)).normalize();
+</code></pre>
+
+    <a href="./pages/cs184-final/writeup-files/vectors3.png">
+      <img class="full-width-unless-tall" src="./pages/cs184-final/writeup-files/vectors3.png"></img>
+    </a>
+
+    <hr/>
+    <h4>Aside: Grouping Objects into "Spaces"</h4>
+
+    <p>But then, how does aligning the floor plane help us to align the other elements of a hallway - left wall, right wall, and lighting? Three.js has an excellent structure wherein an <code>Object3D</code> can contain other <code>Object3D</code>s. So if we add all of the elements of a hallway (or to use the term that we use in our code, a "space") into a <a href="https://threejs.org/docs/#api/objects/Group"><code>Group</code></a>, then we can simply position the group as we had previously done with the floor.</p>
+    <hr/>
+
+    <p>With the alignment problem finally solved, we finally tried to integrate it into Daniel's code. We faced some problems at that point, but they were so specific to Daniel's existing code that it's probably not worth explaining them.</p>
+
+    <hr/>
+
+    <h3>Adding 1st-Person Camera Functionality</h3>
+
+    <p>The app already had pathfinding, but we wanted to make the process more immersive by making the user "fly along" the route in first-person.</p>
+
+    <a href="./pages/cs184-final/writeup-files/first_person2.png">
+      <img class="full-width-unless-tall" src="./pages/cs184-final/writeup-files/first_person2.png"></img>
+    </a>
+
+    <p>The best way to see what we mean by "1st-Person Camera Functionality" is to simply <a href="/pages/cs184-final/final-product/">try out the app.</p>
+
+    <a href="./pages/cs184-final/writeup-files/first_person1.png">
+      <img class="full-width-unless-tall" src="./pages/cs184-final/writeup-files/first_person1.png"></img>
+    </a>
+
+    <p>Our initial thought was to update the <code>position</code> attribute of the camera at a regular time interval to simulate the motion of the camera through space.</p>
+
+    <p>We quickly realized, though, that we would need to also update the <code>lookAt</code> of the camera, which would have the side effect of preventing the user from being able to pan around the space.</p>
+
+    <p>We decided then to work with two attributes of the OrbitControls library: <code>controls.target</code> and <code>controls.maxDistance</code>. Used together, these would cause the camera to fly along the vector as if pulled by a string.</p>
+
+    <p>The challenge, then, was how to interpolate over time. The cleanest way was to use Tween.js, a JavaScript interpolation library, and to write a recursive function that would chain these "tweens" together.</p>
+
+<pre><code class="javascript">function nextCameraTween(path, index, sf, ef) {
+    var start = convertVec(coords[path[index]]);
+    var end = convertVec(coords[path[index+1]]);
+    if (index === 0) {start = (new THREE.Vector3()).lerpVectors(start, end, sf);}
+    if (index+1 === path.length - 1) {end = (new THREE.Vector3()).lerpVectors(start, end, 1-ef);}
+    var tween = new TWEEN.Tween(start).to(end, 500+start.distanceTo(end)*1400/WALKING_SPEED_RATIO);
+    tween.easing(TWEEN.Easing.Quadratic.InOut);
+    var dir = (new THREE.Vector3()).subVectors(end, start).normalize();
+    tween.onUpdate(function(){
+        controls.target = start;
+    });
+    if (index === path.length - 2) {
+        tween.onComplete(endPathAnimation);
+        return tween;
+    } else {
+        return tween.chain(nextCameraTween(path,index+1, sf, ef));
+    }
+}</code></pre>
+
+    <p>We had some trouble with pointers and the asynchronous nature of JavaScript at this point, but nothing insurmountable.</p>
+
+  <hr/>
+
+  <h3>Environment Map</h3>
+
+    <p>For this step, we found a creative approach by <a href="http://blog.mastermaps.com/2014/01/photo-spheres-with-threejs.html">Bjørn Sandvik</a>. The gist is to create a very large sphere, apply a texture to it, and then turn the sphere inside-out so that, from the camera's perspective, we are simply looking out at the world.</p>
+
+    <a href="./pages/cs184-final/writeup-files/envMap1.png">
+      <img class="full-width-unless-tall" src="./pages/cs184-final/writeup-files/envMap1.png"></img>
+    </a>
+
+    <p>The source image is a photo sphere in the format of an <a href="http://wiki.panotools.org/Equirectangular_Projection">Equirectangular Projection</a>. It's an image that I took when crossing Strawberry Creek on campus a few years ago on my Nexus phone using the "Photo Sphere" functionality.</p>
+
+    <a href="./pages/cs184-final/writeup-files/envMap2.jpg">
+      <img class="full-width-unless-tall" src="./pages/cs184-final/writeup-files/envMap2.jpg"></img>
+    </a>
+
+    <p>The implementation took much longer than it needed to due to cross-origin security limitations when you are opening an html page from a file in Chrome. Essentially, we had a problem where no matter what, we could not get a photo to appear as a texture in the model. It turned out that Chrome doesn't allow a website to directly access the file system for security reasons, so we needed to put the html page on a web server to develop this particular stage.</p>
+
+  <hr/>
+
+  <h3>User Interface Improvements</h3>
+
+  <p>User interface improvements are not really the focus of CS184, but we want to mention them anyway because they took some effort and some creativity.</p>
+
+  <p>Essentially, the original app had a perfectly functional user interface, but since the 3D model was not the focus of the original app, it had a different focus.</p>
+
+  <p>We made modifications to make it more user-friendly, such as:</p>
+  <ul>
+    <li>Making the model take up the full screen, regardless of screen size.</li>
+    <li>Updating the layout, colours, and component design to match <a href=
+    "https://design.google.com/resources/">Google's Material Design standard.</a></li>
+    <li>Adding a toggle to completely hide the larger menu - a useful feature for mobile users who would otherwise have the 3D model blocked by the menu.</li>
+  </ul>
+
+  <p>We also added a few additional ways for the user to interact with the 3D model, including:</p>
+  <ul>
+    <li>walking speed adjustment to speed up or slow down the "fly-through" speed, and</li>
+    <li>third-person/first-person toggle.</li>
+  </ul>
+
+  <hr/>
+
+  <h3>Results</h3>
+  <iframe style="width:100%; height:700px; max-height:100%" src="/pages/cs184-final/final-product/"></iframe>
+  <div class="videoWrapper">
+    <iframe src="https://www.youtube.com/embed/3GgXMudRhFo" frameborder="0" allowfullscreen></iframe>
+  </div>
+
+  <h3>References</h3>
+  <p>References are listed throughout the writeup, where relevant. I can't think of any that we forgot to mention.</p>
+
+  <h3>Contributions from each team member</h3>
+  <p>A lot of our brainstorming and programming was done together through pair programing. There were a number of tasks completed together and some done individually.</p>
+  <p>Shared:</p>
+  <ul>
+    <li>Three.js basics and basic hallway.</li>
+    <li>Understanding Daniel’s code.</li>
+    <li>Plane geometry before the breakthrough.</li>
+    <li>Tweening.</li>
+    <li>Final video.</li>
+    <li>Final report.</li>
+  </ul>
+  <p>Ollie:</p>
+  <ul>
+    <li>Break through with plane geometry.</li>
+    <li>Structuring hallways as objects so planes can be defined in relation to each other.</li>
+    <li>Rendering lighting effects for only the path traveled.</li>
+    <li>Code restructuring / structuring.</li>
+    <li>Procedurally generating a basic hallway.</li>
+  </ul>
+  <p>Diana:</p>
+  <ul>
+    <li>Worked on tweening.</li>
+    <li>Worked on adding walls to planes following vectors.</li>
+    <li>Milestone website.</li>
+    <li>Milestone video.</li>
+    <li>Final presentation.</li>
+  </ul>

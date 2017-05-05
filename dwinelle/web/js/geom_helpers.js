@@ -142,8 +142,8 @@ function makeLine(ax, ay, az, bx, by, bz, m) {
 
 function makeCylinder(pointX, pointY, material) {
   // http://stackoverflow.com/questions/15316127/three-js-line-vector-to-cylinder
-  var pointX = convertVec(pointX);
-  var pointY = convertVec(pointY);
+  pointX = convertVec(pointX);
+  pointY = convertVec(pointY);
   var direction = new THREE.Vector3().subVectors(pointY, pointX);
   var orientation = new THREE.Matrix4();
   orientation.lookAt(pointX, pointY, new THREE.Object3D().up);
